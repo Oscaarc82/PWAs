@@ -31,17 +31,35 @@ namespace PWAs.Controller
         public async Task<IActionResult> AltaProducto(Producto producto)
         {
             ProductosService pps = new ProductosService(_configuration);
-            bool res;
+            bool bAlta;
+            int res;
+            string prefijo, numSec, codigo;
 
             try
             {
                 res = pps.AltaProducto(producto);
+                bAlta = res > -1;
+
+                if (bAlta)
+                {
+                    prefijo = (producto.SNombre.Length >= 3) ? producto.SNombre.Substring(0, 3).ToUpper() : producto.SNombre.ToUpper();
+                    numSec = res.ToString("D3");
+                    codigo = $"{prefijo}{numSec}";
+
+                    var nProd = new Producto { IId = res };
+
+                    ctx.tProducto.Attach(nProd);
+                    nProd.SCodigo = codigo;
+
+                    ctx.Entry(nProd).Property(p => p.SCodigo).IsModified = true;
+                    await ctx.SaveChangesAsync();
+                }
             }
             catch
             {
-                res = false;
+                bAlta = false;
             }
-            if (res) return Ok(new { statusCode = "200", status = "Success", sMensaje = "Alta exitosa" }); else return Ok(new Response() { statusCode = "400", status = "Error", sMensaje = "Ocurrio un error en el proceso" });
+            if (bAlta) return Ok(new { statusCode = "200", status = "Success", sMensaje = "Alta exitosa" }); else return Ok(new Response() { statusCode = "400", status = "Error", sMensaje = "Ocurrio un error en el proceso" });
         }
     }
 }

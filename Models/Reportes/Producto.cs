@@ -7,13 +7,18 @@ namespace PWAs.Models.Reportes
     {
         [Key]
         public int IId { get; set; }
+        public string SCodigo { get; set; }
         [Required]
         public string? SNombre { get; set; }
+        [Required]
+        public string SDescripcion {  get; set; }
+        [Required]
+        public int ICategoria { get; set; }
         [Required]
         [Column(TypeName = "decimal(18, 2)")]
         public decimal? DePrecio { get; set; }
         public int IStock { get; set; }
         [Required]
-        public int IsDisponible { get; set; }
+        public int IStockMin { get; set; }
     }
 }

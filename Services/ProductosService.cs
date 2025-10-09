@@ -16,39 +16,50 @@ namespace PWAs.Services
             Configuration = config;
         }
 
-        public bool AltaProducto(Producto producto)
+        public int AltaProducto(Producto producto)
         {
             sCadenaConexion = Configuration["ConnectionStrings:MainConnection"];
             Conexion sCon = new Conexion(sCadenaConexion);
             storedProcedure sp = new storedProcedure(sCadenaConexion, Configuration);
             bool bAlta = true;
             string query = "";
+            int iProducto;
 
             try
             {
-                query = "Insert Into Seguridad.dbo.tProducto (sNombre, dePrecio, iStock, isDisponible) Values " +
-                        " (@sNombre, @dePrecio, @iStock, @isDisponible)";
+                query = "Insert Into Seguridad.dbo.tProducto (sCodigo, sNombre, sDescripcion, iCategoria, dePrecio, iStock, iStockMin) Values " +
+                        " (@sCodigo, @sNombre, @sDescripcion, @iCategoria, @dePrecio, @iStock, @iStockMin); Select  Scope_Identity();";
 
                 using (SqlConnection connection = new SqlConnection(sCadenaConexion))
                 {
                     using (SqlCommand command = new SqlCommand(query, connection))
                     {
+                        command.Parameters.Add("@sCodigo", SqlDbType.VarChar).Value = producto.SCodigo;
                         command.Parameters.Add("@sNombre", SqlDbType.VarChar).Value = producto.SNombre;
+                        command.Parameters.Add("@sDescripcion", SqlDbType.VarChar).Value = producto.SDescripcion;
+                        command.Parameters.Add("@iCategoria", SqlDbType.Int).Value = producto.ICategoria;
                         command.Parameters.Add("@dePrecio", SqlDbType.Decimal).Value = producto.DePrecio;
                         command.Parameters.Add("@iStock", SqlDbType.Int).Value = producto.IStock;
-                        command.Parameters.Add("@isDisponible", SqlDbType.Int).Value = producto.IsDisponible;
+                        command.Parameters.Add("@iStockMin", SqlDbType.Int).Value = producto.IStockMin;
 
                         connection.Open();
 
-                        bAlta = command.ExecuteNonQuery() > 0;
+                        try
+                        {
+                            iProducto = Convert.ToInt32(command.ExecuteScalar());
+                        }
+                        catch 
+                        {
+                            iProducto = -1;
+                        }
                     }
                 }
             }
             catch
             {
-                bAlta = false;
+                iProducto = -1;
             }
-            return bAlta;
+            return iProducto;
         }
     }
 }
