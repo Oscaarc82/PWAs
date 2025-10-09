@@ -86,15 +86,20 @@ namespace PWAs.Controller
         [HttpPost]
         public async Task<IActionResult> Post([FromBody] Authorization login, [FromHeader] string Token)
         {
-            UsuariosService usp = new UsuariosService(_configuration);
-
             if (!ModelState.IsValid) return BadRequest(ErrorHelper.GetModelStateErrors(ModelState));
 
             if (!_mailSer.IsValidMail(login.Usuario)) return BadRequest(new { mensaje = "Ingresa un correo valido" });
 
             var sesion = await _context.tSesiones.FirstOrDefaultAsync(x => x.SUsuario == login.Usuario);
 
-            if (sesion != null) return BadRequest(new { mensaje = "Existe una sesion activa en otro dispositivo" });
+            if (sesion != null)
+            {
+                if (sesion.DExpiracion < DateTime.UtcNow) {
+                    _context.tSesiones.Remove(sesion);
+                    _context.SaveChanges();
+                }
+                else return BadRequest(new { mensaje = "Existe una sesion activa en otro dispositivo" });
+            }
 
             var tokenTemp = await _context.tTokensTemp
                                             .FirstOrDefaultAsync(x => x.SToken == Token && x.DFechaExpiracion > DateTime.Now);
@@ -141,8 +146,6 @@ namespace PWAs.Controller
                 _context.tSesiones.Add(nvaSesion);
                 await _context.SaveChangesAsync();
 
-                //usp.CrearSesion(usuario.IID, usuario.SEmail, nvaLocacion, hrAct, hrExpr);
-
                 _context.tTokensTemp.Remove(tokenTemp);
                 _context.SaveChanges();
 
@@ -172,11 +175,9 @@ namespace PWAs.Controller
 
                 if (usuario == null)
                 {
-                    var rolInvitado = await _context.tRoles.FirstOrDefaultAsync(r => r.SRole == "Invitado");
-                    if (rolInvitado == null)
-                    {
-                        return StatusCode(500, new { mensaje = "El rol 'Invitado' no está configurado." });
-                    }
+                    var rolInvitado = await _context.tRoles.FirstOrDefaultAsync(r => r.SRole == "Editor");
+
+                    if (rolInvitado == null) return StatusCode(500, new { mensaje = "El rol 'Editor' no está configurado." });
 
                     usuario = new Usuario
                     {
@@ -268,7 +269,23 @@ namespace PWAs.Controller
             await _context.SaveChangesAsync();
 
             return Ok(new { mensaje = "Password restablecida con exito" });
-        
+        }
+
+        [HttpDelete]
+        [Route("CerrarSesion")]
+        public async Task<IActionResult> CerrarSesion(int iUsuario)
+        {
+            var sesion = await _context.tSesiones.FirstOrDefaultAsync(s => s.IUsuario == iUsuario);
+
+            if (sesion != null)
+            {
+                _context.tSesiones.Remove(sesion);
+                _context.SaveChanges();
+                
+                return Ok(new { mensaje = "Sesion cerrada con exito" });
+            }
+
+            return BadRequest(new { mensaje = "No hay ninguna sesion activa con este usuario" });
         }
 
         public class Authorization

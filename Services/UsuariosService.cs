@@ -12,43 +12,10 @@ namespace PWAs.Services
     {
         private IConfiguration Configuration;
         string sCadenadeConexion;
-        private MailService _mSer;
 
         public UsuariosService(IConfiguration config)
         {
             Configuration = config;
-        }
-
-        public bool CrearSesion(int iUsuario, string sUsuario, Point Location, DateTime TimeStamp, DateTime dExpi)
-        {
-            sCadenadeConexion = Configuration["ConnectionStrings:MainConnection"];
-            Conexion sCon = new Conexion(sCadenadeConexion);
-            storedProcedure sp = new storedProcedure(sCadenadeConexion, Configuration);
-            bool bAlta = true;
-            string query = "";
-
-            try
-            {
-                query = "Insert Into Seguridad.dbo.tSesiones (iUsuario, dExpiracion) Values" +
-                        " (@iUsuario, @dExpiracion)";
-
-                using (SqlConnection connection = new SqlConnection(sCadenadeConexion))
-                {
-                    using (SqlCommand command = new SqlCommand(query, connection))
-                    {
-                        command.Parameters.Add("@iUsuario", SqlDbType.Int).Value = iUsuario;
-                        command.Parameters.Add("@dExpiracion", SqlDbType.DateTime).Value = dExpi;
-
-                        connection.Open();
-                        bAlta = command.ExecuteNonQuery() > 0;
-                    }
-                }
-            }
-            catch
-            {
-                bAlta = false;
-            }
-            return bAlta;
         }
 
         public bool AltaUsuario(UsuarioNvo usuario, string sSalt)
