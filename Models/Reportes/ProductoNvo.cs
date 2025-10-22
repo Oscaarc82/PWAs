@@ -3,15 +3,13 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PWAs.Models.Reportes
 {
-    public class Producto
+    public class ProductoNvo
     {
-        [Key]
-        public int IId { get; set; }
         public string SCodigo { get; set; }
         [Required]
         public string? SNombre { get; set; }
         [Required]
-        public string SDescripcion {  get; set; }
+        public string SDescripcion { get; set; }
         [Required]
         public int ICategoria { get; set; }
         [Required]
@@ -20,9 +18,6 @@ namespace PWAs.Models.Reportes
         public int IStock { get; set; }
         [Required]
         public int IStockMin { get; set; }
-        public int  iProveedor { get; set; }
-        [ForeignKey("IId")]
-        [Required]
-        public Proveedor Proveedor { get; set; }
+        public int iProveedor { get; set; }
     }
 }
