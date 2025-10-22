@@ -15,7 +15,7 @@ namespace PWAs.Services
             Configuration = config;
         }
 
-        public bool generarMovimiento(int tipo, int iProducto, int iCantidad, string referencia, string responsable)
+        public bool registrarMovimiento(int tipo, int iProducto, int iCantidad, string referencia, string responsable)
         {
             sCadenaConexion = Configuration["ConnectionStrings:MainConnection"];
             Conexion sCon = new(sCadenaConexion);

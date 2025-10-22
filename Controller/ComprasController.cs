@@ -33,6 +33,7 @@ namespace PWAs.Controller
         public async Task<IActionResult> CrearCompra([FromBody] CompraDto compraDto)
         {
             ComprasService cps = new ComprasService(_config);
+            MovimientosService ms = new(_config);
             int idCompra;
 
             //var usuarioId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -49,6 +50,8 @@ namespace PWAs.Controller
 
                 if (producto == null) return BadRequest(new { mensaje = $"Producto con id {detalleDto.IIdProducto} no encontrado"});
 
+                if (producto.IStock < detalleDto.ICantidad) return BadRequest(new { mensaje = $"Producto con id {detalleDto.IIdProducto} no cuenta con el stock suficiente" });
+
                 totalCompra += producto.DePrecio * detalleDto.ICantidad;
 
                 detallesDb.Add(new CompraDetalles
@@ -57,6 +60,12 @@ namespace PWAs.Controller
                     ICantidad = detalleDto.ICantidad,
                     DePrecio = producto.DePrecio
                 });
+
+                producto.IStock -= detalleDto.ICantidad;
+
+                var prov = await _ctx.tProveedor.FirstOrDefaultAsync(x => x.Iid == producto.iProveedor);
+
+                ms.registrarMovimiento(2, detalleDto.IIdProducto, detalleDto.ICantidad, producto.SCodigo, usuarioId.SNombre);
             }
 
             var compra = new Compra
@@ -68,6 +77,7 @@ namespace PWAs.Controller
             };
 
             idCompra = cps.CrearCompra(detallesDb, compra);
+            await _ctx.SaveChangesAsync();
 
             return Ok(new { mensaje = "Compra realizada con exito", iDCompra = idCompra });
         }

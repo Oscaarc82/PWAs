@@ -22,6 +22,7 @@ namespace PWAs.Context
         public DbSet<CompraDetalles> tCompraDetalles { get; set; }
         public DbSet<LocationRecord> tLocationRecords {  get; set; }
         public DbSet<Sesiones> tSesiones { get; set; }
+        public DbSet<Proveedor> tProveedor { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
