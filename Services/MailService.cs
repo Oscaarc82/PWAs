@@ -19,7 +19,7 @@ namespace PWAs.Services
 
         }
 
-        public bool EnviarMail(string email, string asunto, string cuerpoMail)
+        public static bool EnviarMail(string email, string asunto, string cuerpoMail)
         {
             MailMessage mail = new MailMessage();
             SmtpClient smtp = new SmtpClient("smtp.gmail.com", 587);
