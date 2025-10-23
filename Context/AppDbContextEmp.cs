@@ -4,7 +4,7 @@ namespace PWAs.Context
 {
     public class AppDbContextEmp : DbContext
     {
-        private string connectionString;
+        private readonly string connectionString;
 
         public AppDbContextEmp(DbContextOptions<AppDbContextEmp> options)
             : base(options)

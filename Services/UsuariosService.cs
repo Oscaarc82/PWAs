@@ -1,4 +1,5 @@
 ﻿using Microsoft.Data.SqlClient;
+using Microsoft.IdentityModel.Tokens;
 using NetTopologySuite.Geometries;
 using PWAs.Models.Conexion;
 using PWAs.Models.Usuarios;
@@ -10,8 +11,8 @@ namespace PWAs.Services
 {
     public class UsuariosService
     {
-        private IConfiguration Configuration;
-        string sCadenadeConexion;
+        private readonly IConfiguration Configuration;
+        const string mainConn = "ConnectionStrings:MainConnection";
 
         public UsuariosService(IConfiguration config)
         {
@@ -20,9 +21,8 @@ namespace PWAs.Services
 
         public bool AltaUsuario(UsuarioNvo usuario, string sSalt)
         {
-            sCadenadeConexion = Configuration["ConnectionStrings:MainConnection"];
-            Conexion sCon = new Conexion(sCadenadeConexion);
-            storedProcedure sp = new storedProcedure(sCadenadeConexion, Configuration);
+            string sCadenadeConexion = Configuration[mainConn];
+            StoredProcedure sp = new StoredProcedure(sCadenadeConexion, Configuration);
             bool bAlta = true;
             string query = "";
 
@@ -31,8 +31,6 @@ namespace PWAs.Services
 
             try
             {
-                /*query = "Insert Into Seguridad.dbo.tUsuarios (sNombre, sEmail, sPasswd, dFechaC, iEstatus, iIdRol) " +
-                        " Values ('" +  usuario.SNombre + "', '" + usuario.SEmail + "', '" + hsPasswd + "', '" + fecha.ToString("yyyy-MM-dd HH:mm:ss") + "', 1, " + usuario.iRol + ")";*/
                 query = "Insert Into Seguridad.dbo.tUsuarios (sNombre, sEmail, sPasswd, dFechaC, iEstatus, iIdRol) Values" +
                         " (@sNombre, @sEmail, @sPasswd, @dFechaC, @iEstatus, @iIdRol)";
 
@@ -63,10 +61,8 @@ namespace PWAs.Services
 
         public List<UsuariosList> ListarUsuarios()
         {
-            sCadenadeConexion = Configuration["ConnectionStrings:MainConnection"];
-            Conexion sCon = new Conexion(sCadenadeConexion);
-            storedProcedure sp = new storedProcedure(sCadenadeConexion, Configuration);
-            List<string> res = new List<string>();
+            string sCadenadeConexion = Configuration[mainConn];
+            StoredProcedure sp = new StoredProcedure(sCadenadeConexion, Configuration);
             List<UsuariosList> lstUsuarios = new List<UsuariosList>();
             string query = "";
 
@@ -76,7 +72,7 @@ namespace PWAs.Services
                         " Join Seguridad.dbo.tRoles as tr" +
                         " On tr.iIdRol = tu.iIdRol";
 
-                res = sp.recuperaRegistros(query);
+                List<string> res = sp.recuperaRegistros(query);
 
                 if (res.Count > 0)
                 {
@@ -102,18 +98,26 @@ namespace PWAs.Services
 
         public bool EliminarUsuario(int iIdUsuario, int iAcccion)
         {
-            sCadenadeConexion = Configuration["ConnectionStrings:MainConnection"];
-            Conexion sCon = new Conexion(sCadenadeConexion);
-            storedProcedure sp = new storedProcedure(sCadenadeConexion, Configuration);
+            string sCadenadeConexion = Configuration[mainConn];
+            StoredProcedure sp = new StoredProcedure(sCadenadeConexion, Configuration);
             bool bBaja = true;
             string query = "";
 
             try
             {
                 query = "Delete From Seguridad.dbo.tUsuarios " +
-                        " Where iID = " + iIdUsuario + "";
+                        " Where iID = @iUsuario";
 
-                bBaja = sp.ejecutaSQL(query);
+                using (SqlConnection conn = new SqlConnection(sCadenadeConexion))
+                {
+                    using (SqlCommand cmd = new SqlCommand(query, conn))
+                    {
+                        cmd.Parameters.Add("@iUsuario", SqlDbType.Int).Value = iIdUsuario;
+
+                        conn.Open();
+                        bBaja = cmd.ExecuteNonQuery() > 0;
+                    }
+                }
             }
             catch
             {
@@ -124,21 +128,31 @@ namespace PWAs.Services
 
         public bool ActualizarUsuario(int iIdUsuario, string sNombre, string sEmail)
         {
-            sCadenadeConexion = Configuration["ConnectionStrings:MainConnection"];
-            Conexion sCon = new Conexion(sCadenadeConexion);
-            storedProcedure sp = new storedProcedure(sCadenadeConexion, Configuration);
+            string sCadenadeConexion = Configuration[mainConn];
+            StoredProcedure sp = new StoredProcedure(sCadenadeConexion, Configuration);
             bool bActualizacion = true;
             string query;
 
             try
             {
                 query = "Update tUsuarios" +
-                        " Set " +
-                        " sNombre = '" + sNombre + "'," +
-                        " sEmail = '" + sEmail + "'" +
-                        " Where iID = " + iIdUsuario + "";
+                            " Set " +
+                            " sNombre = @sNombre," +
+                            " sEmail = @sEmail" +
+                            " Where iID = @iUsuario";
 
-                bActualizacion = sp.ejecutaSQL(query);
+                using (SqlConnection connection = new SqlConnection(sCadenadeConexion))
+                {
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        command.Parameters.Add("@sNombre", SqlDbType.VarChar).Value = sNombre;
+                        command.Parameters.Add("@sEmail", SqlDbType.VarChar).Value = sEmail;
+                        command.Parameters.Add("@iUsuario", SqlDbType.Int).Value = iIdUsuario;
+
+                        connection.Open();
+                        bActualizacion = command.ExecuteNonQuery() > 0;
+                    }
+                }
             }
             catch
             {

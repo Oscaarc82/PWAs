@@ -4,7 +4,7 @@ using System.Text;
 
 namespace PWAs.Helper
 {
-    public class HashHelper
+    public static class HashHelper
     {
         public static HashedPassword Hash(string password)
         {
@@ -19,7 +19,7 @@ namespace PWAs.Helper
                 password: password,
                 salt: salt,
                 prf: KeyDerivationPrf.HMACSHA256,
-                iterationCount: 10000,
+                iterationCount: 100000,
                 numBytesRequested: 256 / 8));
             return new HashedPassword() { Password = hashed, Salt = Convert.ToBase64String(salt) };
         }
@@ -30,7 +30,7 @@ namespace PWAs.Helper
                  password: attemptedPassword,
                  salt: Convert.FromBase64String(salt),
                  prf: KeyDerivationPrf.HMACSHA256,
-                 iterationCount: 10000,
+                 iterationCount: 100000,
                  numBytesRequested: 256 / 8));
             return hash == hashed;
         }

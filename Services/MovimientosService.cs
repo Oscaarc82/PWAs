@@ -7,8 +7,7 @@ namespace PWAs.Services
 {
     public class MovimientosService
     {
-        private IConfiguration Configuration;
-        string sCadenaConexion;
+        private readonly IConfiguration Configuration;
 
         public MovimientosService(IConfiguration config)
         {
@@ -17,9 +16,7 @@ namespace PWAs.Services
 
         public bool registrarMovimiento(int tipo, int iProducto, int iCantidad, string referencia, string responsable)
         {
-            sCadenaConexion = Configuration["ConnectionStrings:MainConnection"];
-            Conexion sCon = new(sCadenaConexion);
-            storedProcedure sp = new storedProcedure(sCadenaConexion, Configuration);
+            string sCadenaConexion = Configuration["ConnectionStrings:MainConnection"];
             bool bBandera;
             string query;
 

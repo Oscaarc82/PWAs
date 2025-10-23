@@ -21,12 +21,12 @@ namespace PWAs.Controller
 
         [HttpGet]
         [Route("ObtenerProveedores")]
-        public async Task<ActionResult<IEnumerable<ProveedorDTO>>> GetProveedores()
+        public async Task<ActionResult<IEnumerable<ProveedorDto>>> GetProveedores()
         {
             try
             {
                 var proveedores = await _context.tProveedor
-                    .Select(p => new ProveedorDTO
+                    .Select(p => new ProveedorDto
                     {
                         Iid = p.Iid,
                         SNombre = p.SNombre,
@@ -45,13 +45,13 @@ namespace PWAs.Controller
 
         [HttpGet]
         [Route("ObtenerProveedor")]
-        public async Task<ActionResult<ProveedorDTO>> GetProveedor(int id)
+        public async Task<ActionResult<ProveedorDto>> GetProveedor(int id)
         {
             try
             {
                 var proveedor = await _context.tProveedor
                     .Where(p => p.Iid == id)
-                    .Select(p => new ProveedorDTO
+                    .Select(p => new ProveedorDto
                     {
                         Iid = p.Iid,
                         SNombre = p.SNombre,
@@ -73,7 +73,7 @@ namespace PWAs.Controller
         [HttpPost]
         [Route("CrearProveedor")]
         [Authorize(Roles = "Admin")]
-        public async Task<ActionResult> AltaProveedor(ProveedorCreateDTO proveedorCreateDTO)
+        public async Task<ActionResult> AltaProveedor(ProveedorCreateDto proveedorCreateDTO)
         {
             try
             {
@@ -105,7 +105,7 @@ namespace PWAs.Controller
         [HttpPut]
         [Route("ActualizarProveedor")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> PutProveedor(int id, ProveedorUpdateDTO proveedorUpdateDTO)
+        public async Task<IActionResult> PutProveedor(int id, ProveedorUpdateDto proveedorUpdateDTO)
         {
             try
             {

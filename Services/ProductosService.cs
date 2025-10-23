@@ -8,8 +8,8 @@ namespace PWAs.Services
 {
     public class ProductosService
     {
-        private IConfiguration Configuration;
-        string sCadenaConexion;
+        private readonly IConfiguration Configuration;
+        const string mainConn = "ConnectionStrings:MainConnection";
 
         public ProductosService(IConfiguration config)
         {
@@ -18,10 +18,7 @@ namespace PWAs.Services
 
         public int AltaProducto(ProductoNvo producto)
         {
-            sCadenaConexion = Configuration["ConnectionStrings:MainConnection"];
-            Conexion sCon = new Conexion(sCadenaConexion);
-            storedProcedure sp = new storedProcedure(sCadenaConexion, Configuration);
-            bool bAlta = true;
+            string sCadenaConexion = Configuration[mainConn];
             string query = "";
             int iProducto;
 
@@ -67,7 +64,7 @@ namespace PWAs.Services
         {
 
             List<Producto> productos = new List<Producto>();
-            sCadenaConexion = Configuration["ConnectionStrings:MainConnection"];
+            string sCadenaConexion = Configuration[mainConn];
             string query = "";
 
             try

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
 using PWAs.Context;
 using PWAs.Models;
 using PWAs.Models.Reportes;
@@ -18,15 +19,11 @@ namespace PWAs.Controller
     {
         private readonly IConfiguration _configuration;
         private readonly AppDbContext ctx;
-        private readonly IHostingEnvironment _hosting;
-        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public ProductosController(IConfiguration configuration, AppDbContext ctx, Microsoft.AspNetCore.Hosting.IHostingEnvironment hosting, IWebHostEnvironment webHostEnvironment)
+        public ProductosController(IConfiguration configuration, AppDbContext ctx)
         {
             _configuration = configuration;
             this.ctx = ctx;
-            _hosting = hosting;
-            _webHostEnvironment = webHostEnvironment;
         }
 
         [HttpPost]
@@ -76,9 +73,8 @@ namespace PWAs.Controller
         [HttpPut]
         [Route("ActualizarProducto")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> ActualizarProducto(ActualizarProductoDTO producto)
+        public async Task<IActionResult> ActualizarProducto(ActualizarProductoDto producto)
         {
-            ProductosService ps = new ProductosService(_configuration);
             bool bBandera;
 
             try
@@ -111,7 +107,7 @@ namespace PWAs.Controller
         [HttpPut]
         [Route("AumentarStock")]
         [Authorize(Roles = "Admin")]
-        public async Task<IActionResult> AumentarStock(AumentarStockDTO producto)
+        public async Task<IActionResult> AumentarStock(AumentarStockDto producto)
         {
             MovimientosService ms = new(_configuration);
             bool bBandera;
@@ -120,7 +116,7 @@ namespace PWAs.Controller
             {
                 var prod = await ctx.tProducto.FirstOrDefaultAsync(x => x.IId == producto.iProducto);
 
-                if (prod == null) NotFound(new { mensaje = "Producto no encontrado" });
+                if (prod == null) return NotFound(new { mensaje = "Producto no encontrado" });
 
                 prod.IStock += producto.iCantidad;
 
@@ -156,22 +152,22 @@ namespace PWAs.Controller
             return Ok(productos);
         }
 
-        public class ActualizarProductoDTO
+        public class ActualizarProductoDto
         {
             [Required]
-            public int iProducto { get; set; }
+            [JsonRequired] public int iProducto { get; set; }
             public string sNombre { get; set; }
             public string sDescripcion { get; set; }
-            public decimal dePrecio { get; set; }
-            public int iStockMin { get; set; }
+            [JsonRequired] public decimal dePrecio { get; set; }
+            [JsonRequired] public int iStockMin { get; set; }
         }
 
-        public class AumentarStockDTO
+        public class AumentarStockDto
         {
             [Required]
-            public int iProducto { get; set; }
-            public int iCantidad { get; set; }
-            public int iProveedor { get; set; }
+            [JsonRequired] public int iProducto { get; set; }
+            [JsonRequired] public int iCantidad { get; set; }
+            [JsonRequired] public int iProveedor { get; set; }
         }
     }
 }

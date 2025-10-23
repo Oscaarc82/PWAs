@@ -11,18 +11,17 @@ namespace PWAs.Models.Conexion
 {
     public class Conexion
     {
-        private ConnectionState oConexionEstadoAbierto = new ConnectionState();
         private static readonly IConfiguration Configuration;
+
         #region Ejecuta Sentencia SQL
         /**
          * Ejecuta una sentencia SQL
          * Regresa true si se ejuctó o false si no se ejecuta la consulta
         **/
-        public bool EjecutarSQL(SqlConnectionStringBuilder builder, string sQueryString)
+        public static bool EjecutarSQL(SqlConnectionStringBuilder builder, string sQueryString)
         {
             var ctx = new AppDbContextEmp(builder.ConnectionString);
             DbCommand cmd = ctx.Database.GetDbConnection().CreateCommand();
-            string resultado = "";
 
             try
             {
@@ -32,13 +31,7 @@ namespace PWAs.Models.Conexion
 
                 using (DbDataReader reader = cmd.ExecuteReader())
                 {
-                    if (reader.HasRows)
-                    {
-                        while (reader.Read())
-                        {
-                            resultado = reader.GetValue(0).ToString();
-                        }
-                    }
+                    if (reader.HasRows);
                 }
 
                 cmd.Connection.Close();
@@ -61,7 +54,7 @@ namespace PWAs.Models.Conexion
          * Ejecuta una sentencia SQL
          * Regresa el int de la consulta
         **/
-        public int RecuperaValorNum(SqlConnectionStringBuilder bulder, string sQueryString)
+        public static int RecuperaValorNum(SqlConnectionStringBuilder bulder, string sQueryString)
         {
 
             var ctx = new AppDbContextEmp(bulder.ConnectionString);
@@ -103,7 +96,7 @@ namespace PWAs.Models.Conexion
          * Ejecuta una sentencia SQL
          * Regresa un objeto datatable
         **/
-        public DataTable GetValues(SqlConnectionStringBuilder bulder, string sQueryString)
+        public static DataTable GetValues(SqlConnectionStringBuilder bulder, string sQueryString)
         {
             DataTable ds = new DataTable();
 
@@ -135,7 +128,7 @@ namespace PWAs.Models.Conexion
             }
             catch (Exception ex)
             {
-                throw new Exception(ex.Message);
+                ds = new DataTable();
             }
 
 
@@ -148,7 +141,7 @@ namespace PWAs.Models.Conexion
          * Ejecuta una sentencia SQL
          * Regresa el string de la consulta
         **/
-        public string recuperaValor(SqlConnectionStringBuilder bulder, string query)
+        public static string recuperaValor(SqlConnectionStringBuilder bulder, string query)
         {
             var ctx = new AppDbContextEmp(bulder.ConnectionString);
             string sResultado = "";
@@ -199,7 +192,7 @@ namespace PWAs.Models.Conexion
          * Ejecuta una sentencia SQL
          * Regresa una lista de string con el resultado de la consulta
         **/
-        public List<string> recuperaRegistros(SqlConnectionStringBuilder bulder, string query)
+        public static List<string> recuperaRegistros(SqlConnectionStringBuilder bulder, string query)
         {
 
             var ctx = new AppDbContextEmp(bulder.ConnectionString);
@@ -228,7 +221,6 @@ namespace PWAs.Models.Conexion
                             }
 
                         }
-                        //conexion.Close();
                         return resultado;
                     }
                     cmd.Connection.Close();
@@ -237,7 +229,7 @@ namespace PWAs.Models.Conexion
             }
             catch (SqlException ex)
             {
-                return null;
+                return new List<string>();
             }
         }
         #endregion
@@ -247,7 +239,7 @@ namespace PWAs.Models.Conexion
          * Ejecuta una sentencia SQL
          * Regresa una lista de objetos con el resultado de la consulta
         **/
-        public List<T> getObject<T>(SqlConnectionStringBuilder bulder, string query) where T : new()
+        public static List<T> getObject<T>(SqlConnectionStringBuilder bulder, string query) where T : new()
         {
             List<T> Lista = new List<T>();
 
@@ -281,16 +273,14 @@ namespace PWAs.Models.Conexion
             }
             catch (Exception ex)
             {
-                throw new Exception(ex.Message);
+                Lista = new List<T> { new T() };
             }
-
-
             return Lista;
         }
         #endregion
 
         #region bulkTablaGenerico
-        public string BulkTablaGenerico(string nomProcedure, Object[] oParametros, SqlConnectionStringBuilder builder)
+        public static string BulkTablaGenerico(string nomProcedure, Object[] oParametros, SqlConnectionStringBuilder builder)
         {
             var ctx = new AppDbContextEmp(builder.ConnectionString);
             DbCommand cmd = ctx.Database.GetDbConnection().CreateCommand();
@@ -329,7 +319,7 @@ namespace PWAs.Models.Conexion
         /// <param name="sNombreSP">Nombre del store procedure a inicializar.</param>
         /// <param name="iTimeout">Timpo maximo de espera.</param>
         /// <returns>String con la respuesta si se inicializo correctemente o no.</returns>
-        public string[] GenerarSP(string sNombreSP, int iTimeout, string sVariableProc, string sValor, string sVariableProc2, DataTable dtlValor, SqlConnectionStringBuilder builder)
+        public static string[] GenerarSP(string sNombreSP, int iTimeout, string sVariableProc, string sValor, string sVariableProc2, DataTable dtlValor, SqlConnectionStringBuilder builder)
         {
             var conexiones = new AppDbContextEmp(builder.ConnectionString);
             string[] resultado = new string[2];
@@ -359,79 +349,25 @@ namespace PWAs.Models.Conexion
             }
             return resultado;
         }
-
-        public List<T> RecuperaObjetoLista<T>(string sQuery, string[] aAtributos) where T : new()
-        {
-            string sRes = "1";
-            string sDato = "";
-            List<T> lstDatos = new List<T>();
-            try
-            { // Establece conexion y obtiene la información.
-                EstablecerConexion();
-                oSQlConnection.Open();
-                oSqlCommand = new SqlCommand(sQuery, oSQlConnection);
-                oSqlCommand.CommandType = CommandType.Text;
-                oSqlCommand.CommandTimeout = 30000;
-                oSqlDataReader = oSqlCommand.ExecuteReader();
-                // Recorre los registros obtenidos.
-                while (oSqlDataReader.Read())
-                {
-                    // Crea un objeto del tipo de dato idicado en los parámetros.
-                    var Data = new T();
-                    // Obtiene los atributos del objeto.
-                    PropertyInfo[] Properties = Data.GetType().GetProperties();
-                    // Recorre las propuedades para asignarlas.
-                    foreach (var p in Properties)
-                    {
-                        // Verifica si la propiedad esta en los atributos que se asignarán.
-                        if (Array.IndexOf(aAtributos, p.Name) >= 0)
-                        {
-                            // Valida que el dato a asignar no es nulo, de otra forma no lo asigna. (Lo que indica un valor equivalente).
-                            if (!oSqlDataReader.IsDBNull(Array.IndexOf(aAtributos, p.Name)))
-                            {
-                                // Se obtiene el dato a asignar en el atributo correspondiente.
-                                sDato = oSqlDataReader.GetValue(Array.IndexOf(aAtributos, p.Name)).ToString();
-                                // Verifica si el valor a asignar es un decimal.
-                                if (p.PropertyType == typeof(decimal))
-                                { // Si es un decimal lo convierte bajo la validación del tipo de valor hexadecimal(valores con e), con millones (valores con ,), y punto decimal(valores con .).
-                                    sDato = oSqlDataReader.GetValue(Array.IndexOf(aAtributos, p.Name)).ToString();
-                                    decimal dDato = decimal.Parse(sDato, System.Globalization.NumberStyles.Float | System.Globalization.NumberStyles.AllowThousands | System.Globalization.NumberStyles.AllowDecimalPoint);
-                                    sDato = dDato.ToString();
-                                }
-                                // Se parsea el valor del reader al tipo de dato de la clase.
-                                p.SetValue(Data, Convert.ChangeType(sDato, p.PropertyType, null), null);
-                            }
-                        }
-                    }
-                    lstDatos.Add(Data);
-                }
-            }
-            catch (Exception ex)
-            {
-                sRes = ex.Message.ToString();
-            }
-            finally
-            {
-                oSQlConnection.Close();
-                oSQlConnection.Dispose();
-            }
-            return lstDatos;
-        }
         #endregion
 
-        private SqlConnection oSQlConnection; // Objeto de Conexión.
-        private SqlCommand oSqlCommand = null; // Linea de comandos.
-        private SqlDataReader oSqlDataReader = null; // Resultados.
-        public string sCadenaConexion;
+        private string sCadenaConexion;
+
+        public string SCadenaConexion
+        {
+            get { return sCadenaConexion; }
+            set { sCadenaConexion = value; }
+        }
 
         public Conexion(string sCadenaConexion)
         {
             this.sCadenaConexion = sCadenaConexion;
-            this.oConexionEstadoAbierto = ConnectionState.Open;
         }
 
         public string EstablecerConexion()
         {
+            SqlConnection oSQlConnection;
+
             try
             {
                 oSQlConnection = new SqlConnection(Configuration[sCadenaConexion].ToString());
