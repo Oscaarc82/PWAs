@@ -7,6 +7,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 using Microsoft.AspNetCore.Authorization;
 using PWAs.Services;
 using System.ComponentModel.DataAnnotations;
+using Newtonsoft.Json;
 
 namespace PWAs.Controller
 {
@@ -16,17 +17,10 @@ namespace PWAs.Controller
     public class UsuariosController : ControllerBase
     {
         private readonly IConfiguration _configuration;
-        private readonly AppDbContext ctx;
-        private readonly IHostingEnvironment _hosting;
-        private readonly IWebHostEnvironment _webHostEnvironment;
-        private readonly MailService _mailSer = new MailService();
 
-        public UsuariosController(IConfiguration configuration, AppDbContext ctx, IHostingEnvironment hosting, IWebHostEnvironment webHostEnvironment)
+        public UsuariosController(IConfiguration configuration)
         {
             _configuration = configuration;
-            this.ctx = ctx;
-            _hosting = hosting;
-            _webHostEnvironment = webHostEnvironment;
         }
 
         [HttpPost]
@@ -34,11 +28,11 @@ namespace PWAs.Controller
         [AllowAnonymous]
         public async Task<IActionResult> AltaUsuario(UsuarioNvo usuario)
         {
-            if (!_mailSer.IsValidMail(usuario.SEmail)) return BadRequest(new { mensaje = "Ingresa un correo valido" });
+            if (MailService.IsValidMail(usuario.SEmail)) return BadRequest(new { mensaje = "Ingresa un correo valido" });
 
             UsuariosService usc = new UsuariosService(_configuration);
             bool res;
-            string sSalt = _mailSer.GTokenRec();
+            string sSalt = MailService.GTokenRec();
 
             try
             {
@@ -92,16 +86,16 @@ namespace PWAs.Controller
         [HttpPost]
         [Route("ActualizarUsuario")]
         [Authorize(Roles = "Admin, Editor")]
-        public async Task<IActionResult> ActualizarUsuario(int iIdUsuario, string sNombre, string sEmail)
+        public async Task<IActionResult> ActualizarUsuario(ActualizarUsuarioDto usuario)
         {
-            if (!_mailSer.IsValidMail(sEmail)) return BadRequest(new { mensaje = "Ingresa un correo valido" });
+            if (MailService.IsValidMail(usuario.sEmail)) return BadRequest(new { mensaje = "Ingresa un correo valido" });
 
             UsuariosService usc = new UsuariosService(_configuration);
             bool res;
 
             try
             {
-                res = usc.ActualizarUsuario(iIdUsuario, sNombre, sEmail);
+                res = usc.ActualizarUsuario(usuario.iIdUsuario, usuario.sNombre, usuario.sEmail);
             }
             catch
             {
@@ -113,9 +107,17 @@ namespace PWAs.Controller
         public class BajaUsuarioDto
         {
             [Required]
-            public int iIdUsuario { get; set; }
+            [JsonRequired] public int iIdUsuario { get; set; }
             [Required]
-            public int iAccion {  get; set; }
+            [JsonRequired] public int iAccion {  get; set; }
+        }
+
+        public class ActualizarUsuarioDto
+        {
+            [Required]
+            public int iIdUsuario { get; private set; }
+            [JsonRequired] public string sNombre { get; set; }
+            [JsonRequired] public string sEmail { get; set; }
         }
     }
 }

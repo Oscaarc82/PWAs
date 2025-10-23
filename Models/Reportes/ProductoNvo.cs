@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PWAs.Models.Reportes
@@ -11,13 +12,13 @@ namespace PWAs.Models.Reportes
         [Required]
         public string SDescripcion { get; set; }
         [Required]
-        public int ICategoria { get; set; }
+        [JsonRequired] public int ICategoria { get; set; }
         [Required]
         [Column(TypeName = "decimal(18, 2)")]
         public decimal? DePrecio { get; set; }
-        public int IStock { get; set; }
+        [JsonRequired] public int IStock { get; set; }
         [Required]
-        public int IStockMin { get; set; }
-        public int iProveedor { get; set; }
+        [JsonRequired] public int IStockMin { get; set; }
+        [JsonRequired] public int iProveedor { get; set; }
     }
 }

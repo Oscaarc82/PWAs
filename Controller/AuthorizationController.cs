@@ -18,6 +18,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using NetTopologySuite.Geometries;
+using Newtonsoft.Json;
 
 namespace PWAs.Controller
 {
@@ -27,13 +28,11 @@ namespace PWAs.Controller
     {
         private readonly AppDbContext _context;
         private readonly IConfiguration _configuration;
-        private MailService _mailSer = new();
-        private readonly GeolocalizacionService _gSer;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly GeometryFactory _gFc;
 
-        public static string mailpt1 = "<!DOCTYPE html> <html lang='es'> <head>     <meta charset='UTF-8'>     <meta name='viewport' content='width=device-width, initial-scale=1.0'>     <title>Tu Código de Seguridad</title> </head> <body style='font-family: sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;'>     <div style='background-color: #ffffff; max-width: 600px; margin: 20px auto; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);'>         <h2 style='color: #333; text-align: center; margin-bottom: 30px;'>Tu Código de Seguridad</h2>         <p style='color: #555; line-height: 1.6; margin-bottom: 20px; text-align: center;'>             Este es tu código de seguridad único. Utilízalo para completar el proceso donde se te solicitó.         </p>         <div style='background-color: #e0f7fa; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 30px;'>             <strong style='font-size: 2.5em; color: #007bff; letter-spacing: 10px;'> ";
-        public static string mailpt2 = "</strong>         </div>         <p style='color: #555; line-height: 1.6; margin-bottom: 20px; text-align: center;'>             Por favor, introduce este código en la casilla correspondiente dentro de la aplicación o sitio web.         </p>         <p style='color: #777; font-size: 0.9em; text-align: center;'>             Este código es válido por un tiempo limitado. No lo compartas con nadie.         </p>     </div> </body> </html>";
+        private readonly string mailpt1 = "<!DOCTYPE html> <html lang='es'> <head>     <meta charset='UTF-8'>     <meta name='viewport' content='width=device-width, initial-scale=1.0'>     <title>Tu Código de Seguridad</title> </head> <body style='font-family: sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;'>     <div style='background-color: #ffffff; max-width: 600px; margin: 20px auto; padding: 30px; border-radius: 10px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);'>         <h2 style='color: #333; text-align: center; margin-bottom: 30px;'>Tu Código de Seguridad</h2>         <p style='color: #555; line-height: 1.6; margin-bottom: 20px; text-align: center;'>             Este es tu código de seguridad único. Utilízalo para completar el proceso donde se te solicitó.         </p>         <div style='background-color: #e0f7fa; padding: 20px; border-radius: 8px; text-align: center; margin-bottom: 30px;'>             <strong style='font-size: 2.5em; color: #007bff; letter-spacing: 10px;'> ";
+        private readonly string mailpt2 = "</strong>         </div>         <p style='color: #555; line-height: 1.6; margin-bottom: 20px; text-align: center;'>             Por favor, introduce este código en la casilla correspondiente dentro de la aplicación o sitio web.         </p>         <p style='color: #777; font-size: 0.9em; text-align: center;'>             Este código es válido por un tiempo limitado. No lo compartas con nadie.         </p>     </div> </body> </html>";
 
         public AuthorizationController(AppDbContext context, IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
@@ -47,19 +46,21 @@ namespace PWAs.Controller
         [HttpPost("GetToken")]
         public async Task<IActionResult> ObtenerToken(string correo)
         {
+            MailService _mailSer = new(_configuration);
+
             try
             {
                 var client = _httpClientFactory.CreateClient();
                 var extRes = await client.GetAsync("https://www.google.com");
                 extRes.EnsureSuccessStatusCode();
 
-                if (!_mailSer.IsValidMail(correo)) return BadRequest(new { mensaje = "Ingresa un correo valido" });
+                if (!MailService.IsValidMail(correo)) return BadRequest(new { mensaje = "Ingresa un correo valido" });
 
                 var usuario = await _context.tUsuarios.FirstOrDefaultAsync(x => x.SEmail == correo);
 
                 if (usuario == null) return NotFound(new { mensaje = "No se ha encontrado ningun usuario con ese correo." });
 
-                var token = _mailSer.GTokenRec();
+                var token = MailService.GTokenRec();
                 var tokenTemp = new TokenTemp
                 {
                     SToken = token,
@@ -71,7 +72,7 @@ namespace PWAs.Controller
 
                 string asunto = mailpt1 + token + mailpt2;
 
-                _mailSer.EnviarMail(correo, "Inicio de sesion", asunto);
+                MailService.EnviarMail(correo, "Inicio de sesion", asunto);
 
                 return Ok(new { token });
             }
@@ -88,7 +89,7 @@ namespace PWAs.Controller
         {
             if (!ModelState.IsValid) return BadRequest(ErrorHelper.GetModelStateErrors(ModelState));
 
-            if (!_mailSer.IsValidMail(login.Usuario)) return BadRequest(new { mensaje = "Ingresa un correo valido" });
+            if (!MailService.IsValidMail(login.Usuario)) return BadRequest(new { mensaje = "Ingresa un correo valido" });
 
             var sesion = await _context.tSesiones.FirstOrDefaultAsync(x => x.SUsuario == login.Usuario);
 
@@ -96,7 +97,7 @@ namespace PWAs.Controller
             {
                 if (sesion.DExpiracion < DateTime.UtcNow) {
                     _context.tSesiones.Remove(sesion);
-                    _context.SaveChanges();
+                    await _context.SaveChangesAsync();
                 }
                 else return BadRequest(new { mensaje = "Existe una sesion activa en otro dispositivo" });
             }
@@ -144,10 +145,9 @@ namespace PWAs.Controller
                 };
 
                 _context.tSesiones.Add(nvaSesion);
-                await _context.SaveChangesAsync();
 
                 _context.tTokensTemp.Remove(tokenTemp);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
 
                 return Ok(ErrorHelper.ResponseToken(200, bearer_token, hrExpr.ToString()));
             }
@@ -159,7 +159,7 @@ namespace PWAs.Controller
 
         [AllowAnonymous]
         [HttpPost("GoogleLogin")]
-        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDTO login)
+        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDto login)
         {
             var clientId = _configuration["Authentication:Google:ClientId"];
 
@@ -227,13 +227,13 @@ namespace PWAs.Controller
         [Route("SolRecPasswd")]
         public async Task<IActionResult> SolRecPasswd(string correo)
         {
-            if (!_mailSer.IsValidMail(correo)) return BadRequest(new { mensaje = "Ingresa un correo valido" });
+            if (!MailService.IsValidMail(correo)) return BadRequest(new { mensaje = "Ingresa un correo valido" });
 
             var usuario = await _context.tUsuarios.FirstOrDefaultAsync(u => u.SEmail == correo);
 
             if (usuario == null) return Ok();
 
-            var token = _mailSer.GTokenRec();
+            var token = MailService.GTokenRec();
             var tokenTemp = new TokenTemp
             {
                 SToken = token,
@@ -245,7 +245,7 @@ namespace PWAs.Controller
             await _context.SaveChangesAsync();
 
             string asunto = mailpt1 + token + mailpt2;
-            _mailSer.EnviarMail(correo, "Restablecer contrasena", asunto);
+            MailService.EnviarMail(correo, "Restablecer contrasena", asunto);
 
             return Ok();
         }
@@ -294,11 +294,11 @@ namespace PWAs.Controller
             public string? Usuario { get; set; }
             [Required(ErrorMessage = "The key is mandatory")]
             public string? Clave { get; set; }
-            public double Latitude { get; set; }
-            public double Longitude { get; set; }
+            [JsonRequired] public double Latitude { get; set; }
+            [JsonRequired] public double Longitude { get; set; }
         }
 
-        public class GoogleLoginDTO
+        public class GoogleLoginDto
         {
             public string? token { get; set; }
         }

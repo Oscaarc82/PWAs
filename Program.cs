@@ -59,8 +59,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 builder.Services.AddAuthorization();
 
-builder.Services.AddScoped<GeolocalizacionService>();
-
 var connectionString = builder.Configuration.GetConnectionString("MainConnection");
 
 builder.Services.AddDbContext<AppDbContext>(options => 
@@ -84,4 +82,4 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run();
+await app.RunAsync();

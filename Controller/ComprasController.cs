@@ -7,6 +7,7 @@ using PWAs.Models.Reportes;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 using PWAs.Services;
+using Newtonsoft.Json;
 
 namespace PWAs.Controller
 {
@@ -16,15 +17,11 @@ namespace PWAs.Controller
     {
         private readonly IConfiguration? _config;
         private readonly AppDbContext _ctx;
-        private readonly IHostingEnvironment? _host;
-        private readonly IWebHostEnvironment? _webHost;
 
-        public ComprasController(IConfiguration? config, AppDbContext ctx, IHostingEnvironment? host, IWebHostEnvironment? webHost)
+        public ComprasController(IConfiguration? config, AppDbContext ctx)
         {
             _config = config;
             _ctx = ctx;
-            _host = host;
-            _webHost = webHost;
         }
 
         [HttpPost]
@@ -36,7 +33,6 @@ namespace PWAs.Controller
             MovimientosService ms = new(_config);
             int idCompra;
 
-            //var usuarioId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             var usuarioId = await _ctx.tUsuarios.FirstOrDefaultAsync(x => x.IID == compraDto.IIdUsuario);
 
             if (usuarioId.IID != compraDto.IIdUsuario) return NotFound(new { mensaje = "Usuario no encontrado" });
@@ -63,8 +59,6 @@ namespace PWAs.Controller
 
                 producto.IStock -= detalleDto.ICantidad;
 
-                var prov = await _ctx.tProveedor.FirstOrDefaultAsync(x => x.Iid == producto.iProveedor);
-
                 ms.registrarMovimiento(2, detalleDto.IIdProducto, detalleDto.ICantidad, producto.SCodigo, usuarioId.SNombre);
             }
 
@@ -87,28 +81,27 @@ namespace PWAs.Controller
         [Authorize(Roles = "Admin, Editor")]
         public async Task<IActionResult> ListarCompras()
         {
-            var compras = new List<Compra>();
-
             try
             {
-                compras = await _ctx.tCompra
+                var compras = await _ctx.tCompra
                     .Include(c => c.Usuario)
                     .Include(c => c.Detalles)
                     .ThenInclude(d => d.Producto)
                     .ToListAsync();
 
                 if (compras == null || !compras.Any()) return NotFound(new { mensaje = "No se encontraron compras" });
+
+                return Ok(compras);
             } 
             catch
             {
                 return NotFound(new { mensaje = "No se encontraron compras" });
             }
-            return Ok(compras);
         }
 
         public class CompraDto
         {
-            public int IIdUsuario { get; set; }
+            [JsonRequired] public int IIdUsuario { get; set; }
             public List<CompraDetalleDto>? Detalles { get; set; }
         }
 

@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
+using Newtonsoft.Json;
 using PWAs.Context;
 using PWAs.Models.Geolocalizacion;
 using PWAs.Services;
@@ -14,13 +15,11 @@ namespace PWAs.Controller
     {
         private readonly AppDbContext _ctx;
         private readonly GeometryFactory _gFc;
-        private readonly GeolocalizacionService _gSer = new GeolocalizacionService();
 
-        public GeoLocationController(AppDbContext ctx, GeolocalizacionService gSer)
+        public GeoLocationController(AppDbContext ctx)
         {
             _ctx = ctx;
             _gFc = new GeometryFactory(new PrecisionModel(), 4326);
-            _gSer = gSer;
         }
 
         [HttpPost]
@@ -63,26 +62,17 @@ namespace PWAs.Controller
             return Ok(new { cercanos });
         }
 
-        [HttpGet]
-        [Route("Address")]
-        public async Task<IActionResult> GetAddress(double lat, double lon)
-        {
-            var address = await _gSer.GetAddressFromCoordinates(lat, lon);
-
-            return Ok(new { Latitude =  lat, Longitude = lon, Address = address });
-        }
-
         public class UpdateLocationDto
         {
-            public double Latitude { get; set; }
-            public double Longitude { get; set; }
-            public int iUsuario { get; set; }
+            [JsonRequired] public double Latitude { get; set; }
+            [JsonRequired] public double Longitude { get; set; }
+            [JsonRequired] public int iUsuario { get; set; }
         }
 
         public class NearbyRequestDto
         {
-            public double Latitude { get; set; }
-            public double Longitude { get; set; }
+            [JsonRequired] public double Latitude { get; set; }
+            [JsonRequired] public double Longitude { get; set; }
             public int RadiusInMeters { get; set; } = 1000;
         }
     }

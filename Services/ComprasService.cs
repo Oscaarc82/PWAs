@@ -11,8 +11,7 @@ namespace PWAs.Services
 {
     public class ComprasService
     {
-        private IConfiguration Configuration;
-        string sCadenaConexion;
+        private readonly IConfiguration Configuration;
 
         public ComprasService(IConfiguration config)
         {
@@ -21,9 +20,7 @@ namespace PWAs.Services
 
         public int CrearCompra(List<CompraDetalles> compraDetalles, Compra compra)
         {
-            sCadenaConexion = Configuration["ConnectionStrings:MainConnection"];
-            Conexion sCon = new Conexion(sCadenaConexion);
-            storedProcedure sp = new storedProcedure(sCadenaConexion, Configuration);
+            string sCadenaConexion = Configuration["ConnectionStrings:MainConnection"];
             bool bAlta;
             int idCompra = 0;
             string query, queryD;
@@ -31,9 +28,6 @@ namespace PWAs.Services
 
             try
             {
-                /*query = "Insert Into Seguridad.dbo.tCompra (iIdUsuario, dFechaCompra, DeTotal) Values" +
-                        " (" + compra.IIdUsuario + ", '" + fecha.ToString("yyyy-MM-dd HH:mm:ss") + "', '" + compra.DeTotal + "')";*/
-
                 query = "Insert Into Seguridad.dbo.tCompra (iIdUsuario, dFechaCompra, DeTotal) Values" +
                         " (@iId, @dFecha, @deTotal); Select SCOPE_IDENTITY();";
 
@@ -59,9 +53,6 @@ namespace PWAs.Services
                 {
                     foreach (CompraDetalles item in compraDetalles)
                     {
-                        /*queryD = "Insert Into Seguridad.dbo.tCompraDetalles (iCompra, iProducto, iCantidad, iPrecio) Values" +
-                            " (" + idCompra + ", " + item.IProducto + ", " + item.ICantidad + ", '" + item.DePrecio + "')";*/
-
                         queryD = "Insert Into Seguridad.dbo.tCompraDetalles (iCompra, iProducto, iCantidad, iPrecio) Values" +
                                 " (@iCompra, @iProducto, @iCantidad, @dePrecio)";
 
@@ -83,7 +74,7 @@ namespace PWAs.Services
             }
             catch
             {
-                bAlta = false;
+                idCompra = -1;
             }
             return idCompra;
         }

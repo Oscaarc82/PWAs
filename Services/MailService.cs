@@ -14,12 +14,12 @@ namespace PWAs.Services
     public class MailService
     {
         private readonly IConfiguration _configuration;
-        public MailService()
+        public MailService(IConfiguration configuration)
         {
-
+            configuration = _configuration;
         }
 
-        public bool EnviarMail(string email, string asunto, string cuerpoMail)
+        public static bool EnviarMail(string email, string asunto, string cuerpoMail)
         {
             MailMessage mail = new MailMessage();
             SmtpClient smtp = new SmtpClient("smtp.gmail.com", 587);
@@ -47,7 +47,7 @@ namespace PWAs.Services
             return bBandera;
         }
 
-        public string GTokenRec()
+        public static string GTokenRec()
         {
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             var random = new Random();
@@ -57,7 +57,7 @@ namespace PWAs.Services
             return token;
         }
 
-        public bool IsValidMail(string email)
+        public static bool IsValidMail(string email)
         {
             if (string.IsNullOrEmpty(email)) return false;
 
@@ -68,7 +68,7 @@ namespace PWAs.Services
 
         public string GTokenOff(string correo)
         {
-            var secretKey = "419ad46cd4834e4b740c87d35eac11be5c9dbe3c";
+            var secretKey = _configuration.GetValue<string>("SecretKey");
             var key = Encoding.ASCII.GetBytes(secretKey);
 
             var claims = new ClaimsIdentity();
@@ -85,9 +85,6 @@ namespace PWAs.Services
             var tokenT = tokenHandler.CreateToken(tokenDescriptor);
 
             string bearer_token = tokenHandler.WriteToken(tokenT);
-
-            DateTime hrAct = DateTime.Now;
-            DateTime hrExpr = hrAct.AddMinutes(30);
 
             return bearer_token;
         }
