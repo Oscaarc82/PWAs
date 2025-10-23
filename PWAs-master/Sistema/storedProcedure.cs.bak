@@ -1,0 +1,1854 @@
+﻿using System.Configuration;
+using System.Data;
+using System.Data.SqlClient;
+using System.Collections.Generic;
+using System.Reflection;
+using Microsoft.Extensions.Configuration;
+using ProyectoAPISGIFunciones.Models.Conexion;
+
+namespace ProyectoAPISGIFunciones.Sistema
+{
+    public class storedProcedure
+    {
+        private SqlConnection conexion;
+        SqlCommand comando = null;
+        SqlDataReader resultados = null;
+        private string conn;
+        private readonly IConfiguration Configuration;
+
+        public string Conn
+        {
+            get { return conn; }
+            set { conn = value; }
+        }
+        public storedProcedure(string conn)
+        {
+            this.conn = conn;
+        }
+
+        public void establecerConexion()
+        {
+            conexion = new SqlConnection(conn);
+
+        }
+
+        public bool logNParte(string idNParte, string numParte, string descripcionNP, string idUMC, string idFraccion20, string idDescripcionG, string idFraccion12, string idSistema, string idUsuario, DateTime fecha)
+        {
+            bool bAlta;
+            string query = "";
+            string CONEXION = Configuration["ConnectionStrings:ConexionDBEMP"];
+            storedProcedure sp = new storedProcedure("ConnectionStrings:ConexionDBEMP");
+            string sDBEMP = Configuration["BaseEMP"];
+
+            try
+            {
+                if (idFraccion12 != null || idFraccion12 != "")
+                {
+                    query = "Insert Into " + sDBEMP + ".dbo.tbCambiosMaestroPartes (iIdNParte, sNumParte, sDescripcionComercial, iIdUMC, iIdFraccion, sDescripcionF, iIdDescripcionG, iIdFraccion2012, sDescripcionCambio, iIdSistema, iIdUsuario, sFechaCambio)" +
+                                        " Values (" + idNParte + ", '" + numParte + "', '" + descripcionNP + "', '" + idUMC + "', '" + idFraccion20 + "', '" + descripcionNP + "', '" + idDescripcionG + "', '" + idFraccion12 + "', 'Insert', '" + idSistema + "', '" + idUsuario + "', '" + fecha.ToString("yyyy-MM-dd HH:mm:ss") + "')";
+                }
+                else
+                {
+                    query = "Insert Into " + sDBEMP + ".dbo.tbCambiosMaestroPartes (iIdNParte, sNumParte, sDescripcionComercial, iIdUMC, iIdFraccion, sDescripcionF, iIdDescripcionG, sDescripcionCambio, iIdSistema, iIdUsuario, sFechaCambio)" +
+                                        " Values (" + idNParte + ", '" + numParte + "', '" + descripcionNP + "', '" + idUMC + "', '" + idFraccion20 + "', '" + descripcionNP + "', '" + idDescripcionG + "', 'Insert', '" + idSistema + "', '" + idUsuario + "', '" + fecha.ToString("yyyy-MM-dd HH:mm:ss") + "')";
+                }
+
+                bAlta = sp.ejecutaSQL(query);
+            }
+            catch (Exception e)
+            {
+                bAlta = false;
+            }
+            return bAlta;
+        }
+
+        public string actualizarMPR(string numProducto, string numParte, string descripcionF, int idDescripcionG, string fraccion, int idTratado, int idTipoBien, int peso, int idUM, int idRegimen, int idProducto)
+        {
+
+            string result = "";
+            establecerConexion();
+
+            comando = new SqlCommand("spModMPR", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idProducto", SqlDbType.Int).Value = idProducto;
+            comando.Parameters.Add("@numProducto", SqlDbType.VarChar).Value = numProducto;
+            comando.Parameters.Add("@numParteC", SqlDbType.VarChar).Value = numParte;
+            comando.Parameters.Add("@descripcionF", SqlDbType.VarChar).Value = descripcionF;
+            comando.Parameters.Add("@idDescripcionG", SqlDbType.Int).Value = idDescripcionG;
+            comando.Parameters.Add("@fraccion", SqlDbType.VarChar).Value = fraccion;
+            comando.Parameters.Add("@idTratado", SqlDbType.Int).Value = idTratado;
+            comando.Parameters.Add("@idTipoBien", SqlDbType.Int).Value = idTipoBien;
+            comando.Parameters.Add("@peso", SqlDbType.Int).Value = peso;
+            comando.Parameters.Add("@idUM", SqlDbType.Int).Value = idUM;
+            comando.Parameters.Add("@idRegimen", SqlDbType.Int).Value = idRegimen;
+            try
+            {
+                conexion.Open();
+                resultados = comando.ExecuteReader();
+                while (resultados.Read())
+                {
+                    result = resultados.GetValue(0).ToString();
+                }
+                conexion.Close();
+
+                return result;
+            }
+            catch (SqlException e)
+            {
+                return result;
+            }
+        }
+        public string eliminaMPR(int idProducto)
+        {
+            string result = "";
+            establecerConexion();
+
+            comando = new SqlCommand("spEliminarMPR", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idProducto", SqlDbType.Int).Value = idProducto;
+
+
+            try
+            {
+                conexion.Open();
+                resultados = comando.ExecuteReader();
+                while (resultados.Read())
+                {
+                    result = resultados.GetValue(0).ToString();
+                }
+                conexion.Close();
+
+                return result;
+            }
+            catch (SqlException e)
+            {
+                return result;
+            }
+        }
+        public string altaMPR(string numProducto, string numParte, string descripcionF, int idDescripcionG, string fraccion, int idTratado, int idTipoBien, int peso, int idUM, int idRegimen)
+        {
+            string result = "";
+            establecerConexion();
+
+            comando = new SqlCommand("spAltaMPR", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@numProducto", SqlDbType.VarChar).Value = numProducto;
+            comando.Parameters.Add("@numParteC", SqlDbType.VarChar).Value = numParte;
+            comando.Parameters.Add("@descripcionF", SqlDbType.VarChar).Value = descripcionF;
+            comando.Parameters.Add("@idDescripcionG", SqlDbType.Int).Value = idDescripcionG;
+            comando.Parameters.Add("@fraccion", SqlDbType.VarChar).Value = fraccion;
+            comando.Parameters.Add("@idTratado", SqlDbType.Int).Value = idTratado;
+            comando.Parameters.Add("@idTipoBien", SqlDbType.Int).Value = idTipoBien;
+            comando.Parameters.Add("@peso", SqlDbType.Int).Value = peso;
+            comando.Parameters.Add("@idUM", SqlDbType.Int).Value = idUM;
+            comando.Parameters.Add("@idRegimen", SqlDbType.Int).Value = idRegimen;
+
+
+            try
+            {
+                conexion.Open();
+                resultados = comando.ExecuteReader();
+                while (resultados.Read())
+                {
+                    result = resultados.GetValue(0).ToString();
+                }
+                conexion.Close();
+
+                return result;
+            }
+            catch (SqlException e)
+            {
+                return result;
+            }
+        }
+        public string actualizarMP(string numParte, float precio, string descripcionF, int idDescripcionG, int idTratado, int idTipoBien, float peso, int idUM, int idRegimen, int idPais, int idPrefArancelaria, string identificadorPartida, int tasa, string pruebaOrigen, int idMaestroParte, string fraccion)
+        {
+
+            string result = "";
+            establecerConexion();
+
+            comando = new SqlCommand("spModMP", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@numParte", SqlDbType.VarChar).Value = numParte;
+            comando.Parameters.Add("@precio", SqlDbType.Float).Value = precio;
+            comando.Parameters.Add("@descripcionF", SqlDbType.VarChar).Value = descripcionF;
+            comando.Parameters.Add("@idDescripcionG", SqlDbType.Int).Value = idDescripcionG;
+            comando.Parameters.Add("@idTratado", SqlDbType.Int).Value = idTratado;
+            comando.Parameters.Add("@peso", SqlDbType.Float).Value = peso;
+            comando.Parameters.Add("@idUM", SqlDbType.Int).Value = idUM;
+            comando.Parameters.Add("@idRegimen", SqlDbType.Int).Value = idRegimen;
+            comando.Parameters.Add("@idPais", SqlDbType.Int).Value = idPais;
+            comando.Parameters.Add("@idPrefArancelaria", SqlDbType.Int).Value = idPrefArancelaria;
+            comando.Parameters.Add("@identificadorPartida", SqlDbType.VarChar).Value = identificadorPartida;
+            comando.Parameters.Add("@tasa", SqlDbType.Int).Value = tasa;
+            comando.Parameters.Add("@pruebaOrigen", SqlDbType.VarChar).Value = pruebaOrigen;
+            comando.Parameters.Add("@idMaestroParte", SqlDbType.Int).Value = idMaestroParte;
+
+            comando.Parameters.Add("@fraccion", SqlDbType.VarChar).Value = fraccion;
+            try
+            {
+                conexion.Open();
+                resultados = comando.ExecuteReader();
+                while (resultados.Read())
+                {
+                    result = resultados.GetValue(0).ToString();
+                }
+                conexion.Close();
+
+                return result;
+            }
+            catch (SqlException e)
+            {
+                return result;
+            }
+        }
+        public string eliminaMP(int idNParte)
+        {
+            string result = "";
+            establecerConexion();
+
+            comando = new SqlCommand("spEliminarMP", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idNParte", SqlDbType.Int).Value = idNParte;
+
+
+            try
+            {
+                conexion.Open();
+                resultados = comando.ExecuteReader();
+                while (resultados.Read())
+                {
+                    result = resultados.GetValue(0).ToString();
+                }
+                conexion.Close();
+
+                return result;
+            }
+            catch (SqlException e)
+            {
+                return result;
+            }
+        }
+        public string altaMP(string numParte, int umc, string fraccion, float precio, int idPais, int idPrefArrancelaria, string identificadorPartida, int tasa, float peso, string pruebaOrigen, int idTipoBien, int idRegimen, string descripcionF, int idDescripcionG, int idTratado)
+        {
+            string result = "";
+            establecerConexion();
+
+            comando = new SqlCommand("spAltaMP", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@numParte", SqlDbType.VarChar).Value = numParte;
+            comando.Parameters.Add("@umc", SqlDbType.Int).Value = umc;
+            comando.Parameters.Add("@fraccion", SqlDbType.VarChar).Value = fraccion;
+            comando.Parameters.Add("@precio", SqlDbType.Float).Value = precio;
+            comando.Parameters.Add("@idPais", SqlDbType.Int).Value = idPais;
+            comando.Parameters.Add("@idPrefArrancelaria", SqlDbType.Int).Value = idPrefArrancelaria;
+            comando.Parameters.Add("@identificadorPartida", SqlDbType.VarChar).Value = identificadorPartida;
+            comando.Parameters.Add("@tasa", SqlDbType.Int).Value = tasa;
+            comando.Parameters.Add("@peso", SqlDbType.Float).Value = peso;
+            comando.Parameters.Add("@pruebaOrigen", SqlDbType.VarChar).Value = pruebaOrigen;
+            comando.Parameters.Add("@idTipoBien", SqlDbType.Int).Value = idTipoBien;
+            comando.Parameters.Add("@idRegimen", SqlDbType.Int).Value = idRegimen;
+            comando.Parameters.Add("@descripcionF", SqlDbType.VarChar).Value = descripcionF;
+            comando.Parameters.Add("@idDescripcionG", SqlDbType.Int).Value = idDescripcionG;
+            comando.Parameters.Add("@idTratado", SqlDbType.Int).Value = idTratado;
+
+            try
+            {
+                conexion.Open();
+                resultados = comando.ExecuteReader();
+                while (resultados.Read())
+                {
+                    result = resultados.GetValue(0).ToString();
+                }
+                conexion.Close();
+
+                return result;
+            }
+            catch (SqlException e)
+            {
+                return result;
+            }
+        }
+
+        public bool cambiarEstatus(int idSistema, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("spCambiarEstatus", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idSistema", SqlDbType.Int).Value = idSistema;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+
+        public bool insertarSistema(string sistema, string url, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_insertarSistema", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@sistema", SqlDbType.VarChar).Value = sistema;
+            comando.Parameters.Add("@url", SqlDbType.VarChar).Value = url;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool actualizarSistema(int idSistema, string sistema, string url, int idUsuario)
+        {
+            establecerConexion();
+            comando = new SqlCommand("sp_actualizarSistema", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idSistema", SqlDbType.Int).Value = idSistema;
+            comando.Parameters.Add("@sistema", SqlDbType.VarChar).Value = sistema;
+            comando.Parameters.Add("@url", SqlDbType.VarChar).Value = url;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool eliminarSistema(int idSistema, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_eliminarSistema", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idSistema", SqlDbType.Int).Value = idSistema;
+
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+
+        public bool insertarPreferenciaArrancelaria(string preferenciaArrancelaria, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_insertarPreferenciaArrancelaria", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@preferenciaArrancelaria", SqlDbType.VarChar).Value = preferenciaArrancelaria;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool actualizarPreferenciaArrancelaria(int idPreferenciaArrancelaria, string preferenciaArrancelaria, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_actualizarPreferenciaArrancelaria", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idPreArrancelaria", SqlDbType.Int).Value = idPreferenciaArrancelaria;
+            comando.Parameters.Add("@prefArrancelaria", SqlDbType.VarChar).Value = preferenciaArrancelaria;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool eliminarPreferenciaArrancelaria(int idPreferenciaArrancelaria, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_eliminarPreferenciaArrancelaria", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idPreArrancelaria", SqlDbType.Int).Value = idPreferenciaArrancelaria;
+
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+ 
+        public bool insertarDescripcion(string descripcion, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_insertarDescripcion", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@descripcion", SqlDbType.VarChar).Value = descripcion;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool actualizarDescripcion(int idDescripcion, string descripcion, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_actualizarDescripcion", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idDescripcion", SqlDbType.Int).Value = idDescripcion;
+            comando.Parameters.Add("@descripcion", SqlDbType.VarChar).Value = descripcion;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool eliminarDescripcion(int idDescripcion, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_eliminarDescripcion", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idDescripcion", SqlDbType.Int).Value = idDescripcion;
+
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+
+        public bool ejecutaSQL(string query)
+        {
+            establecerConexion();
+            comando = new SqlCommand(query, conexion);
+            comando.CommandType = CommandType.Text;
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteReader();
+                conexion.Close();
+
+                return true;
+            }
+            catch (SqlException ex)
+            {
+                Console.Write(ex);
+                return false;
+            }
+
+        }
+        public List<string> recuperaRegistros(string query)
+        {
+            List<string> resultado = new List<string>();
+            establecerConexion();
+            comando = new SqlCommand(query, conexion);
+            comando.CommandType = CommandType.Text;
+            try
+            {
+                conexion.Open();
+                resultados = comando.ExecuteReader();
+                if (resultados.HasRows)
+                {
+                    while (resultados.Read())
+                    {
+                        for (int i = 0; i < resultados.FieldCount; i++)
+                        {
+                            resultado.Add(resultados.GetValue(i).ToString());
+                        }
+                    }
+                }
+                conexion.Close();
+
+                return resultado;
+            }
+            catch (SqlException ex)
+            {
+                Console.Write(ex);
+                return null;
+            }
+            finally
+            {
+                conexion.Dispose();
+                conexion.Close();
+            }
+
+        }
+
+        public List<Dictionary<string, string>> recuperaRegistroslst(string query)
+        {
+            var resultado = new List<Dictionary<string, string>>();
+            establecerConexion();
+            comando = new SqlCommand(query, conexion);
+            comando.CommandType = CommandType.Text;
+            try
+            {
+                conexion.Open();
+                resultados = comando.ExecuteReader();
+                if (resultados.HasRows)
+                {
+                    while (resultados.Read())
+                    {
+                        var fila = new Dictionary<string, string>();
+                        for (int i = 0; i < resultados.FieldCount; i++)
+                        {
+                            fila[resultados.GetName(i)] = resultados.GetValue(i).ToString();
+                        }
+                        resultado.Add(fila);
+                    }
+                }
+                conexion.Close();
+
+                return resultado;
+            }
+            catch (SqlException ex)
+            {
+                Console.Write(ex);
+                return null;
+            }
+            finally
+            {
+                conexion.Dispose();
+                conexion.Close();
+            }
+        }
+
+        public string recuperaValor(string query)
+        {
+            string resultado = "";
+            establecerConexion();
+
+            comando = new SqlCommand(query, conexion);
+            comando.CommandType = CommandType.Text;
+
+            try
+            {
+                conexion.Open();
+                resultados = comando.ExecuteReader();
+                if (resultados.HasRows)
+                {
+                    while (resultados.Read())
+                    {
+                        resultado = resultados.GetValue(0).ToString();
+                    }
+                }
+                conexion.Close();
+
+                return resultado;
+            }
+            catch (SqlException ex)
+            {
+                Console.Write(ex);
+                return "-1";
+            }
+            finally
+            {
+                conexion.Dispose();
+                conexion.Close();
+            }
+
+        }
+
+        public bool insertarCategoria(string nomCategoria, string imagen, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_insertaCategoria", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@nomCategoria", SqlDbType.VarChar).Value = nomCategoria;
+            comando.Parameters.Add("@imagen", SqlDbType.VarChar).Value = imagen;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool actualizaCategoria(int idCategoria, string nomCategoria, string imagen, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_actualizaRCategoria", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idCategoria", SqlDbType.Int).Value = idCategoria;
+            comando.Parameters.Add("@nomCategoria", SqlDbType.VarChar).Value = nomCategoria;
+            comando.Parameters.Add("@imagen", SqlDbType.VarChar).Value = imagen;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool eliminarCategoria(int idCategoria, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_eliminaCategoria", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idCategoria", SqlDbType.Int).Value = idCategoria;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+
+
+        public bool actualizaRCategoria(int idCategoria, string nomCategoria, string imagen, int idUsuario)
+        {
+            throw new NotImplementedException();
+        }
+
+        public bool insertarTipoTasa(string tipoTasa, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_insertarTipoTasa", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@tipoTasa", SqlDbType.VarChar).Value = tipoTasa;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool actualizarTipoTasa(int idTipoTasa, string tipoTasa, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_actualizarTipoTasa", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idTipoTasa", SqlDbType.Int).Value = idTipoTasa;
+            comando.Parameters.Add("@tipoTasa", SqlDbType.VarChar).Value = tipoTasa;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool eliminarTipoTasa(int idTipoTasa, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_eliminarTipoTasa", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idTipoTasa", SqlDbType.Int).Value = idTipoTasa;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool insertarTipoRegimen(string tipo, string descripcion, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_insertarTipoRegimen", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@tipo", SqlDbType.VarChar).Value = tipo;
+            comando.Parameters.Add("@descripcion", SqlDbType.VarChar).Value = descripcion;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool actualizarTipoRegimen(int idTipoRegimen, string tipo, string descripcion, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_actualizarTipoRegimen", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idTipoRegimen", SqlDbType.Int).Value = idTipoRegimen;
+            comando.Parameters.Add("@tipo", SqlDbType.VarChar).Value = tipo;
+            comando.Parameters.Add("@descripcion", SqlDbType.VarChar).Value = descripcion;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool eliminarTipoRegimen(int idTipoRegimen, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_eliminarTipoRegimen", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idTipoRegimen", SqlDbType.Int).Value = idTipoRegimen;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+
+        public bool insertarMoneda(string claMoneda, string nomMoneda, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_insertarMoneda", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@claMoneda", SqlDbType.VarChar).Value = claMoneda;
+            comando.Parameters.Add("@nomMoneda", SqlDbType.VarChar).Value = nomMoneda;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+
+
+        public bool actualizarMoneda(int idMoneda, string claMoneda, string nomMoneda, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_actualizarMoneda", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idMoneda", SqlDbType.Int).Value = idMoneda;
+            comando.Parameters.Add("@claMoneda", SqlDbType.VarChar).Value = claMoneda;
+            comando.Parameters.Add("@nomMoneda", SqlDbType.VarChar).Value = nomMoneda;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+
+        public bool eliminarMoneda(int idMoneda, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_eliminarMoneda", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idMoneda", SqlDbType.Int).Value = idMoneda;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+
+        public bool insertarUnidadMedida(string uniMedida, string descripcion, string umcmp, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_insertarUnidadMedida", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@uniMedida", SqlDbType.VarChar).Value = uniMedida;
+            comando.Parameters.Add("@descripcion", SqlDbType.VarChar).Value = descripcion;
+            comando.Parameters.Add("@umcmp", SqlDbType.VarChar).Value = umcmp;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool actualizarUnidadMedida(int idUniMedida, string uniMedida, string descripcion, string umcmp, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_actualizarUnidadMedida", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idUniMedida", SqlDbType.Int).Value = idUniMedida;
+            comando.Parameters.Add("@uniMedida", SqlDbType.VarChar).Value = uniMedida;
+            comando.Parameters.Add("@descripcion", SqlDbType.VarChar).Value = descripcion;
+            comando.Parameters.Add("@umcmp", SqlDbType.VarChar).Value = umcmp;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool eliminarUnidadMedida(int idUniMedida, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_eliminarUnidadMedida", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idUniMedida", SqlDbType.Int).Value = idUniMedida;
+
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool insertarMensaje(string asunto, string saludo, string mensaje, string despedida, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_insertarMensaje", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@asunto", SqlDbType.VarChar).Value = asunto;
+            comando.Parameters.Add("@saludo", SqlDbType.VarChar).Value = saludo;
+            comando.Parameters.Add("@mensaje", SqlDbType.VarChar).Value = mensaje;
+            comando.Parameters.Add("@despedida", SqlDbType.VarChar).Value = despedida;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool actualizarMensaje(int idMensaje, string asunto, string saludo, string mensaje, string despedida, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_actualizarMensaje", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idMensaje", SqlDbType.Int).Value = idMensaje;
+            comando.Parameters.Add("@asunto", SqlDbType.VarChar).Value = asunto;
+            comando.Parameters.Add("@saludo", SqlDbType.VarChar).Value = saludo;
+            comando.Parameters.Add("@mensaje", SqlDbType.VarChar).Value = mensaje;
+            comando.Parameters.Add("@despedida", SqlDbType.VarChar).Value = despedida;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool eliminarMensaje(int idMensaje, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_eliminarMensaje", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idMensaje", SqlDbType.Int).Value = idMensaje;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool insertarPais(string nomPais, string acronimoDos, string acronimoTres, int idMoneda, string Cve, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_insertarPais", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@nomPais", SqlDbType.VarChar).Value = nomPais;
+            comando.Parameters.Add("@acronimoDos", SqlDbType.VarChar).Value = acronimoDos;
+            comando.Parameters.Add("@acronimoTres", SqlDbType.VarChar).Value = acronimoTres;
+            comando.Parameters.Add("@idMoneda", SqlDbType.Int).Value = idMoneda;
+            comando.Parameters.Add("@Cve", SqlDbType.VarChar).Value = Cve;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool actualizarPais(int idPais, string nomPais, string acronimoDos, string acronimoTres, int idMoneda, string Cve, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_actualizarPais", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idPais", SqlDbType.Int).Value = idPais;
+            comando.Parameters.Add("@nomPais", SqlDbType.VarChar).Value = nomPais;
+            comando.Parameters.Add("@acronimoDos", SqlDbType.VarChar).Value = acronimoDos;
+            comando.Parameters.Add("@acronimoTres", SqlDbType.VarChar).Value = acronimoTres;
+            comando.Parameters.Add("@idMoneda", SqlDbType.Int).Value = idMoneda;
+            comando.Parameters.Add("@Cve", SqlDbType.VarChar).Value = Cve;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool eliminarPais(int idPais, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_eliminarPais", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idPais", SqlDbType.Int).Value = idPais;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+
+
+        public bool insertarRegimen(string clave, string regimen, int idTipoRegimen, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_insertarRegimen", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@clave", SqlDbType.VarChar).Value = clave;
+            comando.Parameters.Add("@regimen", SqlDbType.VarChar).Value = regimen;
+            comando.Parameters.Add("@idTipoRegimen", SqlDbType.Int).Value = idTipoRegimen;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool actualizarRegimen(int idRegimen, string clave, string regimen, int idTipoRegimen, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_actualizarRegimen", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idRegimen", SqlDbType.Int).Value = idRegimen;
+            comando.Parameters.Add("@clave", SqlDbType.VarChar).Value = clave;
+            comando.Parameters.Add("@regimen", SqlDbType.VarChar).Value = regimen;
+            comando.Parameters.Add("@idTipoRegimen", SqlDbType.Int).Value = idTipoRegimen;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool eliminarRegimen(int idRegimen, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_eliminarRegimen", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idRegimen", SqlDbType.Int).Value = idRegimen;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+
+        public bool insertarTipoCorreo(string tipoCorreo, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_insertarTipoCorreo", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@tipoCorreo", SqlDbType.VarChar).Value = tipoCorreo;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool actualizarTipoCorreo(int idTipoCorreo, string tipoCorreo, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_actualizarTipoCorreo", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idTipoCorreo", SqlDbType.Int).Value = idTipoCorreo;
+            comando.Parameters.Add("@tipoCorreo", SqlDbType.VarChar).Value = tipoCorreo;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool eliminarTipoCorreo(int idTipoCorreo, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_eliminarTipoCorreo", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idTipoCorreo", SqlDbType.Int).Value = idTipoCorreo;
+
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool insertarEstado(string nomEstado, int idPais, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_insertarEstado", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@nomEstado", SqlDbType.VarChar).Value = nomEstado;
+            comando.Parameters.Add("@idPais", SqlDbType.Int).Value = idPais;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool actualizarEstado(int idEstado, string nomEstado, int idPais, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_actualizarEstado", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idEstado", SqlDbType.Int).Value = idEstado;
+            comando.Parameters.Add("@nomEstado", SqlDbType.VarChar).Value = nomEstado;
+            comando.Parameters.Add("@idPais", SqlDbType.Int).Value = idPais;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool eliminarEstado(int idEstado, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_eliminarEstado", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idEstado", SqlDbType.Int).Value = idEstado;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+
+
+        public bool insertarFraccion(string fraccion, string idCapi, string idPart, string idSub, string descripcion, string um, string aranImpo, string aranExpo, string notas, string subpartida, string partida, string capitulo, string seccion, string sector, string condicion, int cn, int vt, string criterio, string metodo, string regla, int idUMT, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_insertarFraccion", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@fraccion", SqlDbType.VarChar).Value = fraccion;
+            comando.Parameters.Add("@idCapi", SqlDbType.VarChar).Value = idCapi;
+            comando.Parameters.Add("@idPart", SqlDbType.VarChar).Value = idPart;
+            comando.Parameters.Add("@idSub", SqlDbType.VarChar).Value = idSub;
+            comando.Parameters.Add("@descripcion", SqlDbType.VarChar).Value = descripcion;
+            comando.Parameters.Add("@um", SqlDbType.VarChar).Value = um;
+            comando.Parameters.Add("@aranImpo", SqlDbType.VarChar).Value = aranImpo;
+            comando.Parameters.Add("@aranExpo", SqlDbType.VarChar).Value = aranExpo;
+            comando.Parameters.Add("@notas", SqlDbType.VarChar).Value = notas;
+            comando.Parameters.Add("@subpartida", SqlDbType.VarChar).Value = subpartida;
+            comando.Parameters.Add("@partida", SqlDbType.VarChar).Value = partida;
+            comando.Parameters.Add("@capitulo", SqlDbType.VarChar).Value = capitulo;
+            comando.Parameters.Add("@seccion", SqlDbType.VarChar).Value = seccion;
+            comando.Parameters.Add("@sector", SqlDbType.VarChar).Value = sector;
+            comando.Parameters.Add("@condicion", SqlDbType.VarChar).Value = condicion;
+            comando.Parameters.Add("@cn", SqlDbType.Int).Value = cn;
+            comando.Parameters.Add("@vt", SqlDbType.Int).Value = vt;
+            comando.Parameters.Add("@criterio", SqlDbType.VarChar).Value = criterio;
+            comando.Parameters.Add("@metodo", SqlDbType.VarChar).Value = metodo;
+            comando.Parameters.Add("@regla", SqlDbType.VarChar).Value = regla;
+            comando.Parameters.Add("@idUMT", SqlDbType.Int).Value = idUMT;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool actualizarFraccion(int idFRaccion, string fraccion, string idCapi, string idPart, string idSub, string descripcion, string um, string aranImpo, string aranExpo, string notas, string subpartida, string partida, string capitulo, string seccion, string sector, string condicion, int cn, int vt, string criterio, string metodo, string regla, int idUMT, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_actualizarFraccion", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@fraccion", SqlDbType.VarChar).Value = fraccion;
+            comando.Parameters.Add("@idCapi", SqlDbType.VarChar).Value = idCapi;
+            comando.Parameters.Add("@idPart", SqlDbType.VarChar).Value = idPart;
+            comando.Parameters.Add("@idSub", SqlDbType.VarChar).Value = idSub;
+            comando.Parameters.Add("@descripcion", SqlDbType.VarChar).Value = descripcion;
+            comando.Parameters.Add("@um", SqlDbType.VarChar).Value = um;
+            comando.Parameters.Add("@aranImpo", SqlDbType.VarChar).Value = aranImpo;
+            comando.Parameters.Add("@aranExpo", SqlDbType.VarChar).Value = aranExpo;
+            comando.Parameters.Add("@notas", SqlDbType.VarChar).Value = notas;
+            comando.Parameters.Add("@subpartida", SqlDbType.VarChar).Value = subpartida;
+            comando.Parameters.Add("@partida", SqlDbType.VarChar).Value = partida;
+            comando.Parameters.Add("@capitulo", SqlDbType.VarChar).Value = capitulo;
+            comando.Parameters.Add("@seccion", SqlDbType.VarChar).Value = seccion;
+            comando.Parameters.Add("@sector", SqlDbType.VarChar).Value = sector;
+            comando.Parameters.Add("@condicion", SqlDbType.VarChar).Value = condicion;
+            comando.Parameters.Add("@cn", SqlDbType.Int).Value = cn;
+            comando.Parameters.Add("@vt", SqlDbType.Int).Value = vt;
+            comando.Parameters.Add("@criterio", SqlDbType.VarChar).Value = criterio;
+            comando.Parameters.Add("@metodo", SqlDbType.VarChar).Value = metodo;
+            comando.Parameters.Add("@regla", SqlDbType.VarChar).Value = regla;
+            comando.Parameters.Add("@idUMT", SqlDbType.Int).Value = idUMT;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+        public bool eliminarFraccion(int idCorreo, int idUsuario)
+        {
+            establecerConexion();
+
+            comando = new SqlCommand("sp_eliminarFraccion", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@idCorreo", SqlDbType.Int).Value = idCorreo;
+
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+            try
+            {
+                conexion.Open();
+                comando.ExecuteNonQuery();
+                conexion.Close();
+                return true;
+            }
+            catch (SqlException e)
+            {
+                return false;
+            }
+        }
+
+        public string construirMenu(int idUsuario, int idSeccion, string idSistema, string idUs, int opcion, string encSeccion)
+        {
+            establecerConexion();
+            if (opcion == 1)
+            {
+                comando = new SqlCommand("sp_menuH", conexion);
+            }
+            else if (opcion == 2)
+            {
+                comando = new SqlCommand("sp_menuC", conexion);
+            }
+            comando.CommandType = CommandType.StoredProcedure;
+
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+            comando.Parameters.Add("@idSeccion", SqlDbType.Int).Value = idSeccion;
+            comando.Parameters.Add("@idSistema", SqlDbType.VarChar).Value = idSistema;
+            comando.Parameters.Add("@idUs", SqlDbType.VarChar).Value = idUs;
+            comando.Parameters.Add("@encSeccion", SqlDbType.VarChar).Value = encSeccion;
+
+            string result = "";
+
+            try
+            {
+                conexion.Open();
+                resultados = comando.ExecuteReader();
+                while (resultados.Read())
+                {
+                    result = resultados.GetValue(0).ToString();
+                }
+                conexion.Close();
+
+                return result;
+            }
+            catch (SqlException e)
+            {
+                return e.Message.ToString();
+            }
+        }
+
+        #region Llamada al Procedimiento de Altas ,Bajas y Actualizaciones para Credenciales VUCEM
+        public string GuardarCredencial(int idCredencial, string password, string archivoCer, string archivoKey, string contrasenaField, string rfc, int accion)
+        {
+            string respuesta = "";
+
+            try
+            {
+                SqlDataReader read = null;
+                establecerConexion();
+                comando = new SqlCommand("spGuardaCredencial", conexion);
+
+                comando.CommandType = CommandType.StoredProcedure;
+
+                comando.Parameters.Add("@idCredencial", SqlDbType.Int).Value = idCredencial;
+                comando.Parameters.Add("@passwordVUCEM", SqlDbType.VarChar).Value = password;
+                comando.Parameters.Add("@archivoCer", SqlDbType.VarChar).Value = archivoCer;
+                comando.Parameters.Add("@archivoKey", SqlDbType.VarChar).Value = archivoKey;
+                comando.Parameters.Add("@contrasenaField", SqlDbType.VarChar).Value = contrasenaField;
+                comando.Parameters.Add("@rfc", SqlDbType.VarChar).Value = rfc;
+                //comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = accion;
+                comando.Parameters.Add("@accion", SqlDbType.Int).Value = accion;
+
+                conexion.Open();
+                read = comando.ExecuteReader();
+                if (read.HasRows)
+                {
+                    while (read.Read())
+                    {
+                        respuesta = read.GetValue(0).ToString();
+                    }
+                    return respuesta;
+                }
+                else
+                {
+                    return respuesta;
+                }
+            }
+            catch (SqlException ex)
+            {
+                return respuesta = "Error Datos no Validos";
+            }
+            finally
+            {
+                if (comando != null)
+                {
+                    comando.Dispose();
+                    conexion.Close();
+                }
+            }
+
+        }
+
+        #endregion
+
+        #region DataStage
+        public string cargarDataStage(string dataStage, string ruta, string hojas, int idUsuario)
+        {
+            string respuesta = "";
+            establecerConexion();
+            comando = new SqlCommand("sp_CargaData", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+            comando.Parameters.Add("@dataStage", SqlDbType.VarChar).Value = dataStage;
+            comando.Parameters.Add("@ruta", SqlDbType.VarChar).Value = ruta;
+            comando.Parameters.Add("@hojas", SqlDbType.VarChar).Value = hojas;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = idUsuario;
+            comando.CommandTimeout = 0;
+            try
+            {
+                conexion.Open();
+                resultados = comando.ExecuteReader();
+                while (resultados.Read())
+                {
+                    respuesta = resultados.GetValue(0).ToString();
+                }
+                conexion.Close();
+
+                return respuesta;
+            }
+            catch (SqlException e)
+            {
+                return respuesta;
+            }
+            //Retornamos la resuesta del metodo
+            return respuesta;
+        }
+        #endregion
+
+        //ejecuta una sentencia sql
+        //regresa un objeto datatable
+        #region getValues
+        public DataTable getValues(string query)
+        {
+            DataTable ds = new DataTable();
+            establecerConexion();
+            try
+            {
+                comando = new SqlCommand(query, conexion);
+                comando.CommandType = CommandType.Text;
+                comando.CommandTimeout = 72000;
+                conexion.Open();
+                resultados = comando.ExecuteReader();
+
+                if (resultados.HasRows)
+                {
+                    ds.Load(resultados, LoadOption.OverwriteChanges);
+                }
+                this.conexion.Close();
+            }
+            catch (Exception ex)
+            {
+
+                //throw new Exception(ex.Message);
+
+            }
+            return ds;
+        }
+        #endregion
+
+        #region
+        /// <summary>
+        /// Metodo que ejecuta el alta de un empleado y devuelve su id
+        /// </summary>
+        /// <param name="sNombre"></param>
+        /// <param name="sApp"></param>
+        /// <param name="sApm"></param>
+        /// <param name="iIdEmpresa"></param>
+        /// <param name="iIdArea"></param>
+        /// <param name="sUsuario"></param>
+        /// <param name="iTipoUsuario"></param>
+        /// <param name="iIdUsuario"></param>
+        /// <returns></returns>
+        public string fn_AltaEmpleado(string sNombre, string sApp, string sApm, int iIdEmpresa, int iIdArea, string sUsuario, int iTipoUsuario, int iIdUsuario)
+        {
+            string sRes = "";
+            establecerConexion();
+
+            comando = new SqlCommand("AltaEmpleado", conexion);
+            comando.CommandType = CommandType.StoredProcedure;
+
+            comando.Parameters.Add("@nombre", SqlDbType.VarChar).Value = sNombre;
+            comando.Parameters.Add("@app", SqlDbType.VarChar).Value = sApp;
+            comando.Parameters.Add("@apm", SqlDbType.VarChar).Value = sApm;
+            comando.Parameters.Add("@empresa", SqlDbType.Int).Value = iIdEmpresa;
+            comando.Parameters.Add("@area", SqlDbType.Int).Value = iIdArea;
+            comando.Parameters.Add("@usuario", SqlDbType.VarChar).Value = sUsuario;
+            comando.Parameters.Add("@tipo", SqlDbType.Int).Value = iTipoUsuario;
+            comando.Parameters.Add("@idUsuario", SqlDbType.Int).Value = iIdUsuario;
+
+            try
+            {
+                conexion.Open();
+                resultados = comando.ExecuteReader();
+                while (resultados.Read())
+                {
+                    sRes = resultados.GetValue(0).ToString();
+                }
+                conexion.Close();
+
+                return sRes;
+            }
+            catch (SqlException e)
+            {
+                throw new Exception("Ha ocurrido un error. Msg:" + e.Message);
+            }
+        }
+        #endregion
+
+        #region GENERICO
+        #region EJECUAR STORE PROCEDURE
+        /// <summary>
+        /// Ejecuta un store de manera generica.
+        /// </summary>
+        /// <param name="lstParametros">Lista con el nombre los parametros del store procedure.</param>
+        /// <param name="lstDatos">Lista con los datos en orden acorde a la lista de paramentros.</param>
+        /// <param name="sStore">Nombre del store procedure.</param>
+        /// <returns>Indicador segun la operacion en el store, y -2 cuando ocurre error.</returns>
+        public string EjecutaStoreProc(List<string> lstParametros, List<string> lstDatos, string sStore)
+        {
+            string sResultado = "";
+            establecerConexion();
+            try
+            {
+                comando = new SqlCommand(sStore, conexion);
+                comando.CommandType = CommandType.StoredProcedure;
+                for (int i = 0; i < lstParametros.Count; i++)
+                {
+                    comando.Parameters.AddWithValue(lstParametros[i].ToString(), lstDatos[i].ToString());
+                }
+                comando.CommandTimeout = 7200000;
+                conexion.Open();
+                resultados = comando.ExecuteReader();
+                if (resultados.HasRows)
+                {
+                    while (resultados.Read())
+                    {
+                        sResultado = resultados.GetValue(0).ToString();
+                    }
+                }
+                conexion.Close();
+
+                return sResultado;
+            }
+            catch (SqlException ex)
+            {
+                Console.Write(ex);
+                return "-2";
+            }
+            finally
+            {
+                conexion.Dispose();
+                conexion.Close();
+            }
+
+        }
+        #endregion
+
+        #region EJECUTAR STORE PROCEDURE DATASET
+        /// <summary>
+        /// Ejecutar un store que reciba de parametros ya sea algun datatable o datos, de otro tipo que se enviaran como string.
+        /// </summary>
+        /// <param name="lstParametros">Lista de los nombres de los parametros de SP, iniciando con el nombre del paramentro del DataTable.</param>
+        /// <param name="lstDatos">Lista de los datos de los parametros extra.</param>
+        /// <param name="sStore">Nombre del Store Procedure.</param>
+        /// <param name="dtsDatos">DataSet con los Datables a agregar al SP, mismo que tienen con los datos.</param>
+        /// <returns>1:Exito, -1:Error.</returns>
+        public string EjecutaStoreDataSet(List<string> lstParametros, List<string> lstDatos, string sStore, DataSet dtsDatos)
+        {
+            string sResultado = "";
+            establecerConexion();
+            try
+            {
+                comando = new SqlCommand(sStore, conexion);
+                comando.CommandType = CommandType.StoredProcedure;
+                int iContador = 0;
+                for (int i = 0; i < dtsDatos.Tables.Count; i++)
+                {
+                    comando.Parameters.AddWithValue(lstParametros[i].ToString(), dtsDatos.Tables[i]);
+                    iContador = i;
+                }
+                iContador++;
+                for (int i = 0; i < lstParametros.Count - iContador; i++)
+                {
+                    comando.Parameters.AddWithValue(lstParametros[i + iContador].ToString(), lstDatos[i].ToString());
+                }
+
+                comando.CommandTimeout = 7200000;
+                conexion.Open();
+                resultados = comando.ExecuteReader();
+                if (resultados.HasRows)
+                {
+                    while (resultados.Read())
+                    {
+                        sResultado = resultados.GetValue(0).ToString();
+                    }
+                }
+                conexion.Close();
+
+                return sResultado;
+            }
+            catch (SqlException ex)
+            {
+                Console.Write(ex);
+                return "-1";
+            }
+            finally
+            {
+                conexion.Dispose();
+                conexion.Close();
+            }
+
+        }
+        #endregion
+
+        #region OBTENER OBJETOS
+        #region OBTENER OBJETO CON LISTA DE ATRIBUTOS
+        /// <summary>
+        /// Permite recuperar un objeto y asignar unicamente los atributos necesario al pasar la lista de los atributos
+        /// </summary>
+        /// <typeparam name="T">Tipo de Objeto a obtener.</typeparam>
+        /// <param name="sQuery">Consulta para obtener los datos de los objetos.</param>
+        /// <param name="lstAtributos">Lista de atributos a asiganar.</param>
+        /// <returns>Objeto de tipo correspondiente.</returns>
+        public T ObtenerObjeto<T>(string sQuery, List<string> lstAtributos) where T : new()
+        {
+            T oT = new T();
+            establecerConexion();
+            try
+            {
+                comando = new SqlCommand(sQuery, conexion);
+                comando.CommandType = CommandType.Text;
+                comando.CommandTimeout = 30000;
+                conexion.Open();
+                resultados = comando.ExecuteReader();
+
+                while (resultados.Read())
+                {
+                    var Data = new T();
+                    PropertyInfo[] Properties = Data.GetType().GetProperties();
+                    foreach (var p in Properties)
+                    {
+                        if (lstAtributos.Contains(p.Name.ToString()))
+                        {
+                            p.SetValue(Data, resultados.GetValue(resultados.GetOrdinal(p.Name)), null);
+                        }
+                    }
+                    oT = Data;
+                }
+
+                this.conexion.Close();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+            finally
+            {
+                this.conexion.Dispose();
+                this.conexion.Close();
+            }
+
+            return oT;
+        }
+        #endregion
+        #region OBTENER LISTA DE OBJETOS PASANDO ATRIBUTOS
+        /// <summary>
+        /// Permite recuperar una lista de objetos asignando unicamente los atributos necesarios.
+        /// </summary>
+        /// <typeparam name="T">Tipo de dato del objeto a regresar.</typeparam>
+        /// <param name="sQuery">Consulta para llenar la lista de objetos.</param>
+        /// <param name="aAtributos">Arreglo de atributos a asignar.</param>
+        /// <returns>Lista de objetos con los datos obtenidos.</returns>
+        public List<T> RecuperaObjetoLista<T>(string sQuery, string[] aAtributos) where T : new()
+        {
+            string sRes = "1";
+            string sDato = "";
+            List<T> lstDatos = new List<T>();
+            try
+            { // Establece conexion y obtiene la información.
+                establecerConexion();
+                conexion.Open();
+                comando = new SqlCommand(sQuery, conexion);
+                comando.CommandType = CommandType.Text;
+                comando.CommandTimeout = 30000;
+                resultados = comando.ExecuteReader();
+                // Recorre los registros obtenidos.
+                while (resultados.Read())
+                {
+                    // Crea un objeto del tipo de dato idicado en los parámetros.
+                    var Data = new T();
+                    // Obtiene los atributos del objeto.
+                    PropertyInfo[] Properties = Data.GetType().GetProperties();
+                    // Recorre las propuedades para asignarlas.
+                    foreach (var p in Properties)
+                    {
+                        // Verifica si la propiedad esta en los atributos que se asignarán.
+                        if (Array.IndexOf(aAtributos, p.Name) >= 0)
+                        {
+                            // Valida que el dato a asignar no es nulo, de otra forma no lo asigna. (Lo que indica un valor equivalente).
+                            if (!resultados.IsDBNull(Array.IndexOf(aAtributos, p.Name)))
+                            {
+                                // Se obtiene el dato a asignar en el atributo correspondiente.
+                                sDato = resultados.GetValue(Array.IndexOf(aAtributos, p.Name)).ToString();
+                                // Verifica si el valor a asignar es un decimal.
+                                if (p.PropertyType == typeof(decimal))
+                                { // Si es un decimal lo convierte bajo la validación del tipo de valor hexadecimal(valores con e), con millones (valores con ,), y punto decimal(valores con .).
+                                    sDato = resultados.GetValue(Array.IndexOf(aAtributos, p.Name)).ToString();
+                                    decimal dDato = decimal.Parse(sDato, System.Globalization.NumberStyles.Float | System.Globalization.NumberStyles.AllowThousands | System.Globalization.NumberStyles.AllowDecimalPoint);
+                                    sDato = dDato.ToString();
+                                }
+                                // Se parsea el valor del reader al tipo de dato de la clase.
+                                p.SetValue(Data, Convert.ChangeType(sDato, p.PropertyType, null), null);
+                            }
+                        }
+                    }
+                    lstDatos.Add(Data);
+                }
+            }
+            catch (Exception ex)
+            {
+                sRes = ex.Message.ToString();
+            }
+            finally
+            {
+                conexion.Close();
+                conexion.Dispose();
+            }
+            return lstDatos;
+        }
+        #endregion
+
+        #endregion
+        #endregion
+
+        
+    }
+}
